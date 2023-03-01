@@ -32,7 +32,7 @@ object GeoSearch{
       ,GeoHash.withBitPrecision(bb.getSouthEastCorner.getLatitude, bb.getSouthEastCorner.getLongitude, 64).toBinaryString
       ,GeoHash.withBitPrecision(bb.getNorthWestCorner.getLatitude, bb.getNorthWestCorner.getLongitude, 64).toBinaryString)
       .foldLeft(GeoHash.withBitPrecision(bb.getNorthEastCorner.getLatitude, bb.getNorthEastCorner.getLongitude, 64).toBinaryString)(stringIntersect)
-    return GeoHash.fromBinaryString(intersection)
+    GeoHash.fromBinaryString(intersection)
   }
 
   /*
@@ -56,6 +56,17 @@ object GeoSearch{
   def addDistanceToLatitude(point: WGS84Point, ms: Measurement.Value = Measurement.Mi): WGS84Point = {
     ???
   }
+
+  /*
+   * Return distance in KM between two points using law of cosines
+   */
+  val earthRadiusKM = 6371
+  def lawOfCosinesDistance(pointA: WGS84Point, pointB: WGS84Point): Double = {
+    Math.acos(Math.sin(pointA.getLatitude) * Math.sin(pointB.getLatitude) + Math.cos(pointA.getLatitude) * Math.cos(pointB.getLatitude) * Math.cos(pointB.getLongitude - pointB.getLongitude)) * earthRadiusKM
+  }
+
+  val milesToKm = (x:Double) => x * 1.60934
+  val kmToMi = (x:Double) => x * 0.621371
 }
 
 //new_latitude  = latitude  + (dy / r_earth) * (180 / pi);
