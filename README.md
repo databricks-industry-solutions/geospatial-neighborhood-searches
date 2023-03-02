@@ -1,17 +1,14 @@
 ![image](https://user-images.githubusercontent.com/86326159/206014015-a70e3581-e15c-4a10-95ef-36fd5a560717.png)
 
-[![CLOUD](https://img.shields.io/badge/CLOUD-ALL-blue?logo=googlecloud&style=for-the-badge)](https://cloud.google.com/databricks)
-[![POC](https://img.shields.io/badge/POC-10_days-green?style=for-the-badge)](https://databricks.com/try-databricks)
-
-*Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.*
+Scaling Geospatial Searches
 
 ___
-<john.doe@databricks.com>
+<aaron.zavora@databricks.com>
 
 ___
 
 
-IMAGE TO REFERENCE ARCHITECTURE
+IMAGE TO REFERENCE ARCHITECTURE - basically this https://i.stack.imgur.com/oLUgi.gif with enhanced datastructure implementations
 
 ___
 
