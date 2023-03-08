@@ -17,10 +17,14 @@ class GeoSearchTest extends AnyFunSuite{
   }
 
   test("Adding distances to longitude"){
-    
+
   }
 
   test("Adding distances to latitude"){
+
+  }
+
+  test("Distance for law of cosines"){
 
   }
 

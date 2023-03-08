@@ -49,12 +49,28 @@ object GeoSearch{
     ???
   }
 
-  def addDistanceToLongitude(point: WGS84Point, ms: Measurement.Value = Measurement.Mi): WGS84Point = {
-    ???
+  /*
+   * Travel distance in Longitude (east/west)
+   *  @point - starting point
+   *  @distance - KM distance to travel
+   *  @return - new point representing the distance traveled
+   *
+   *  newLon = oldLon + (distanceKM * (1 / ((pi / 180) * radiusEathKM) )  /  (cos(latitude) * (pi / 180))
+   */
+  def addDistanceToLongitude(point: WGS84Point, distance: Integer): WGS84Point = {
+    new WGS84Point(point.getLatitude, {point.getLongitude + (distance * (1 / ((Math.PI / 180) * earthRadiusKM))) / Math.cos(point.getLatitude * (Math.PI / 180)) })
   }
 
-  def addDistanceToLatitude(point: WGS84Point, ms: Measurement.Value = Measurement.Mi): WGS84Point = {
-    ???
+  /*
+   * Travel distance in Latitude (north/south) 
+   *  @param distance to travel in KM
+   *  @param poin lat/long to travel along
+   *
+   *  @returns new point
+   *  newLat = oldLat +  (distanceKM / radiusOfEarthKM) * (180 / pi) 
+   */
+  def addDistanceToLatitude(distance: Int, point: WGS84Point): WGS84Point = {
+    new WGS84Point({point.getLatitude + (distance / earthRadiusKM) * (180 / Math.PI)}, point.getLongitude)
   }
 
   /*
