@@ -40,13 +40,19 @@ object GeoSearch{
    *  @param center - center of the box
    *  @param ms - unit of measurement to use (miles defaulted) 
    *  @param size - integer value of size of unit of measurement ms
+   *
+   *  @return - a minimum covering Geohash that covers all 4 points in a bounding box 
    *  
    */
-  def getBoundingBox(center: WGS84Point, size: Int, ms: Measurement.Value = Measurement.Mi): BoundingBox = {
-    val northEastCorner = ???
-    val southWestCorner = ???
-
-    ???
+  def getBoundingBox(center: WGS84Point, size: Integer, ms: Measurement.Value = Measurement.Mi): BoundingBox = {
+    val sizeKM = ms match {
+      case Measurement.Miles | Measurement.Mi => milesToKm(size.toDouble)
+      case Measurement.Kilometers | Measurement.Km => size
+      case _ => throw new Exception("Error: Unrecognized metric of measurement: " + ms)
+    }
+    val southWestCorner = addDistanceToLongitude(-1 * size, addDistanceToLatitude(-1 * size, center))
+    val northEastCorner = addDistanceToLongitude(size, addDistanceToLatitude(size, center))
+    new BoundingBox(southWestCorner, northEastCorner)
   }
 
   /*
@@ -57,7 +63,7 @@ object GeoSearch{
    *
    *  newLon = oldLon + (distanceKM * (1 / ((pi / 180) * radiusEathKM) )  /  (cos(latitude) * (pi / 180))
    */
-  def addDistanceToLongitude(point: WGS84Point, distance: Integer): WGS84Point = {
+  def addDistanceToLongitude(distance: Integer, point: WGS84Point): WGS84Point = {
     new WGS84Point(point.getLatitude, {point.getLongitude + (distance * (1 / ((Math.PI / 180) * earthRadiusKM))) / Math.cos(point.getLatitude * (Math.PI / 180)) })
   }
 
@@ -69,7 +75,7 @@ object GeoSearch{
    *  @returns new point
    *  newLat = oldLat +  (distanceKM / radiusOfEarthKM) * (180 / pi) 
    */
-  def addDistanceToLatitude(distance: Int, point: WGS84Point): WGS84Point = {
+  def addDistanceToLatitude(distance: Integer, point: WGS84Point): WGS84Point = {
     new WGS84Point({point.getLatitude + (distance / earthRadiusKM) * (180 / Math.PI)}, point.getLongitude)
   }
 
