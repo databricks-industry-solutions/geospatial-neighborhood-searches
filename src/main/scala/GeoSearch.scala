@@ -47,10 +47,10 @@ object GeoSearch{
    *   @return the minimum Geohash that encompasses all 4 corners 
    */
   def getIntersectedGeohash(bb: BoundingBox): GeoHash = {
-    val intersection = List(GeoHash.withBitPrecision(bb.getSouthWestCorner.getLatitude, bb.getSouthWestCorner.getLongitude, 64).toBinaryString
-      ,GeoHash.withBitPrecision(bb.getSouthEastCorner.getLatitude, bb.getSouthEastCorner.getLongitude, 64).toBinaryString
-      ,GeoHash.withBitPrecision(bb.getNorthWestCorner.getLatitude, bb.getNorthWestCorner.getLongitude, 64).toBinaryString)
-      .foldLeft(GeoHash.withBitPrecision(bb.getNorthEastCorner.getLatitude, bb.getNorthEastCorner.getLongitude, 64).toBinaryString)(stringIntersect)
+    val intersection = List(GeoHash.withBitPrecision(bb.getSouthWestCorner.getLatitude, bb.getSouthWestCorner.getLongitude, 40).toBinaryString
+      ,GeoHash.withBitPrecision(bb.getSouthEastCorner.getLatitude, bb.getSouthEastCorner.getLongitude, 40).toBinaryString
+      ,GeoHash.withBitPrecision(bb.getNorthWestCorner.getLatitude, bb.getNorthWestCorner.getLongitude, 40).toBinaryString)
+      .foldLeft(GeoHash.withBitPrecision(bb.getNorthEastCorner.getLatitude, bb.getNorthEastCorner.getLongitude, 40).toBinaryString)(stringIntersect)
     GeoHash.fromBinaryString(intersection)
   }
 
