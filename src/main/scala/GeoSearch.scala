@@ -1,17 +1,36 @@
 package com.databricks.labs.geospatial.searches
 
 import ch.hsr.geohash.{GeoHash, BoundingBox, WGS84Point}
+import java.sql.Connection
 
 object Measurement extends Enumeration {
   type Measurement = Value
   val Miles, Kilometers, Mi, Km = Value
 }
 
-object GeoSearch{
-  //https://gis.stackexchange.com/questions/142326/calculating-longitude-length-in-miles
-//  private val milesPerLatitude = ???
-//  private val milesPerLongitude = 55.051 //varies 0 to 69.172
 
+
+/*
+ * Represents a resultset from a search
+ *  @size - number of elements returned
+ *  @values - array of points found in the search
+ */
+case class Record(id: String, latitude: Double, longitude: Double) //Row in the table
+
+case class SearchInquery(rec: Record, radius: Integer, maxResults: Integer=10, ms: Measurement.Value = Measurement.Mi) //function params to ask for nearyby recs
+
+case class SearchResultValue(value: Record, euclidDistance: Double, ms: Measurement.Value = Measurement.Mi)  //a single return value
+
+case class SearchResult(size: Integer, values: Array[SearchResultValue]) //a returned search
+
+object GeoSearch{
+  def search(inquery: SearchInquery, jdbcCon: Connection, table: String): SearchResult = {
+
+    val searchSpace = getBoundingBox(new WGS84Point(inquery.rec.latitude, inquery.rec.longitude), inquery.radius, inquery.ms)
+    val statement = jdbcCon.createStatement
+    //val resultSet = statement.executeQuery("SELECT value from " + table + " where id like
+    ???
+   }
 
 
   /*
@@ -64,7 +83,7 @@ object GeoSearch{
    *  newLon = oldLon + (distanceKM * (1 / ((pi / 180) * radiusEathKM) )  /  (cos(latitude) * (pi / 180))
    */
   def addDistanceToLongitude(distance: Integer, point: WGS84Point): WGS84Point = {
-    new WGS84Point(point.getLatitude, {point.getLongitude + (distance * (1 / ((Math.PI / 180) * earthRadiusKM))) / Math.cos(point.getLatitude * (Math.PI / 180)) })
+    new WGS84Point(point.getLatitude, {point.getLongitude + (distance * (1 / ((Math.PI / 180) * earthRadiusKm))) / Math.cos(point.getLatitude * (Math.PI / 180)) })
   }
 
   /*
@@ -76,29 +95,24 @@ object GeoSearch{
    *  newLat = oldLat +  (distanceKM / radiusOfEarthKM) * (180 / pi) 
    */
   def addDistanceToLatitude(distance: Integer, point: WGS84Point): WGS84Point = {
-    new WGS84Point({point.getLatitude + (distance / earthRadiusKM) * (180 / Math.PI)}, point.getLongitude)
+    new WGS84Point({point.getLatitude + (distance / earthRadiusKm.toDouble) * (180 / Math.PI)}, point.getLongitude)
   }
 
   /*
    * Return distance in KM between two points using law of cosines
+   *  Law of Cosines Distance 
    */
-  val earthRadiusKM = 6371
-  def lawOfCosinesDistance(pointA: WGS84Point, pointB: WGS84Point): Double = {
-    Math.acos(Math.sin(pointA.getLatitude) * Math.sin(pointB.getLatitude) + Math.cos(pointA.getLatitude) * Math.cos(pointB.getLatitude) * Math.cos(pointB.getLongitude - pointB.getLongitude)) * earthRadiusKM
+  def distance(pointA: WGS84Point, pointB: WGS84Point): Double = {
+    val theta = pointA.getLongitude - pointB.getLongitude
+    val dist = Math.acos(Math.sin(Math.toRadians(pointA.getLatitude)) * Math.sin(Math.toRadians(pointB.getLatitude)) +
+      Math.cos(Math.toRadians(pointA.getLatitude)) * Math.cos(Math.toRadians(pointB.getLatitude)) *
+      Math.cos(Math.toRadians(theta)))
+    dist * earthRadiusKm
   }
 
+  val earthRadiusKm = 6371
   val milesToKm = (x:Double) => x * 1.60934
   val kmToMi = (x:Double) => x * 0.621371
 }
-
-//new_latitude  = latitude  + (dy / r_earth) * (180 / pi);
-//new_longitude = longitude + (dx / r_earth) * (180 / pi) / cos(latitude * pi/180);
-
-/*
- * Represents a resultset from a search
- *  @size - number of elements returned
- *  @values - array of points found in the search
- */
-case class SearchResult(size: Int, values: Array[String])
 
 
