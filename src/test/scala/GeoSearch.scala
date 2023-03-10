@@ -34,7 +34,7 @@ class GeoSearchTest extends AnyFunSuite{
     //Confirm this is a minimum covering
     assert (
       sw.substring(0, 18) != se.substring(0,18) || sw.substring(0, 18) != nw.substring(0,18) || sw.substring(0, 18) != nes.substring(0,18)
-        || se.substring(0,18) != nw.substring(0,18) || se.substring(0, 18) != news.substring(0,18)
+        || se.substring(0,18) != nw.substring(0,18) || se.substring(0, 18) != nes.substring(0,18)
         || nw.substring(0,18) != nes.substring(0,18)
     )
 
