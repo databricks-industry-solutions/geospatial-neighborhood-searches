@@ -20,9 +20,15 @@ lazy val testDependencies = Seq(
   "com.typesafe.play" %% "play-json" % "2.9.0"
 ).map(_ % Test)
 
+val circeVersion = "0.14.1"
+
 val coreDependencies = Seq(
-  "ch.hsr" % "geohash" % "1.4.0"
+  "ch.hsr" % "geohash" % "1.4.0",
+  "io.circe" %% "circe-core" % circeVersion,
+  "io.circe" %% "circe-generic" % circeVersion,
+  "io.circe" %% "circe-parser" % circeVersion,
 )
+
 
 libraryDependencies ++= sparkDependencies ++ testDependencies ++ coreDependencies
 
