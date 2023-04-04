@@ -38,6 +38,17 @@ object GeoSearch{
     (a zip b).takeWhile( x => x._1 == x._2 ).map(_._1).mkString
   }
 
+  /*
+   * Given a length and measurement, return KM
+   */
+  def sizeAsKM(size: Integer ,ms: Measurement.Value = Measurement.Mi): Double = {
+    ms match {
+      case Measurement.Miles | Measurement.Mi => milesToKm(size.toDouble)
+      case Measurement.Kilometers | Measurement.Km => size.toDouble
+      case _ => throw new Exception("Error: Unrecognized metric of measurement: " + ms)
+    }
+  }
+
 
   /*
    * Given a search space, return the intersected geohash 
@@ -68,11 +79,7 @@ object GeoSearch{
    *  
    */
   def getBoundingBox(center: WGS84Point, size: Integer, ms: Measurement.Value = Measurement.Mi): BoundingBox = {
-    val sizeKM = ms match {
-      case Measurement.Miles | Measurement.Mi => milesToKm(size.toDouble)
-      case Measurement.Kilometers | Measurement.Km => size
-      case _ => throw new Exception("Error: Unrecognized metric of measurement: " + ms)
-    }
+    val sizeKM = sizeAsKM(size,ms)
     val southWestCorner = addDistanceToLongitude(-1 * size, addDistanceToLatitude(-1 * size, center))
     val northEastCorner = addDistanceToLongitude(size, addDistanceToLatitude(size, center))
     new BoundingBox(southWestCorner, northEastCorner)
