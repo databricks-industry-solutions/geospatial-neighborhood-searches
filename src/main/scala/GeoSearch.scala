@@ -27,7 +27,7 @@ case class SearchInquery(rec: GeoRecord, radius: Integer, maxResults: Integer=10
 
 case class SearchResultValue(value: GeoRecord, euclidDistance: Double, ms: Measurement.Value = Measurement.Mi)  //a single return value
 
-case class SearchResult(size: Integer, values: Array[SearchResultValue], searchTimer: Integer) //a returned search
+case class SearchResult(size: Integer, values: Array[SearchResultValue], searchTimerSeconds: Double) //a returned search
 
 object GeoSearch{
   /*
