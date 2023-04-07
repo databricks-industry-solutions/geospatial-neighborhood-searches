@@ -23,7 +23,7 @@ lazy val testDependencies = Seq(
 val circeVersion = "0.14.1"
 
 val coreDependencies = Seq(
-  "ch.hsr" % "geohash" % "1.4.0",
+  "ch.hsr" % "geohash" % "1.4.0" % "provided",
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,

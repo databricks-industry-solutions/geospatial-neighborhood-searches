@@ -41,7 +41,17 @@ class CosmosDS(config: Map[String, String])(implicit spark: SparkSession) extend
     .buildAsyncClient()
   lazy val container = client.getDatabase(config("cosmosDatabaseName")).getContainer(config("cosmosContainerName"))
 
-  override def recordCount: Long = ???
+  override def recordCount: Long = {
+    val connection = new CosmosClientBuilder()
+      .endpoint(config("cosmosEndpoint"))
+      .key(config("cosmosMasterKey"))
+      .consistencyLevel(ConsistencyLevel.EVENTUAL)
+      .contentResponseOnWriteEnabled(true)
+      .buildAsyncClient()
+    val table = client.getDatabase(config("cosmosDatabaseName")).getContainer(config("cosmosContainerName"))
+    val count = ???
+    c.close()
+  }
   override def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = {
     rdd.mapPartitions(partition => {
       val part = partition.map(search)
@@ -61,17 +71,7 @@ class CosmosDS(config: Map[String, String])(implicit spark: SparkSession) extend
   }
 }
 /*
-val settings = Map( 
-    "host" => "https://geospatial-adz.documents.azure.com:443/", 
-    "master_key" => "unsCqFfHgmm0eqhYoft9vuVSRXuLBTuC34yukGJ10inGZR2s4FYO66BfuaN2CAGIQWwW1zFfzzH3ACDbJdYMfw==",
-    "database_id" =>  "ToDoList",
-    "container_id" => "Items"
-}
-
-
-
  https://learn.microsoft.com/bs-latn-ba/azure/cosmos-db/nosql/quickstart-spark?tabs=scala
- 
 val cosmosEndpoint = "https://REPLACEME.documents.azure.com:443/"
 val cosmosMasterKey = "REPLACEME"
 val cosmosDatabaseName = "sampleDB"
