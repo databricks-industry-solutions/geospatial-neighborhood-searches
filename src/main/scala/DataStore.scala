@@ -1,8 +1,7 @@
 package com.databricks.labs.geospatial.searches
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
-import java.util.concurrent.TimeUnit
-import org.apache.spark.rdd.{ PairRDDFunctions, RDD }
+
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import scala.collection.mutable.ArrayBuffer
@@ -12,12 +11,16 @@ import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructTy
 trait DataStore{
   def search(inquire: SearchInquery): SearchResult
   def recordCount: Long
-  //def fromDF(implicit spark: SparkSession, df: DataFrame): DataStore
+//  def truncate: ???
+//  def delete: ??? 
 }
 
 
+/*
+ * SparkDS to represent functions to query a search space
+ *
+ */
 object SparkDS {
-
   def fromDF(df: DataFrame)(implicit spark: SparkSession): DataStore = {
     import spark.implicits._
     new SparkDS(df.select(col("id").cast(StringType), col("latitude").cast(DoubleType), col("longitude").cast(DoubleType)).rdd.map(row =>

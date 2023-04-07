@@ -3,7 +3,7 @@ name := "geospatial-searches"
 version := "0.0.1"
 
 lazy val scala212 = "2.12.8"
-lazy val sparkVersion = sys.env.getOrElse("SPARK_VERSION", "3.3.0")
+lazy val sparkVersion = sys.env.getOrElse("SPARK_VERSION", "3.2.1")
 ThisBuild / organization := "com.databricks.labs"
 ThisBuild / organizationName := "Databricks, Inc."
 
@@ -27,6 +27,9 @@ val coreDependencies = Seq(
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
+  "com.azure.cosmos.spark" % "azure-cosmos-spark_3-2_2-12" % "4.11.2",
+  "com.audienceproject" %% "spark-dynamodb" % "1.1.2",
+  "com.azure" % "azure-cosmos" % "4.39.0"
 )
 
 

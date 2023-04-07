@@ -32,18 +32,4 @@ class SparkDSTest extends AnyFunSuite{
     assert(result.values.filter(x => x.value.id=="b").length === 1)
     assert(Math.abs(result.values.filter(x => x.value.id=="b")(0).euclidDistance - 140) < 1)
   }
-
-  test("Test SparkDS serialization functionality"){
-    val ds = SparkDS.fromDF(df)
-
-    val inquiryDF = spark.sparkContext.parallelize(Seq(("-a", 11.0, 11.0), ("-b", 55.1, -55.1))).toDF("id", "latitude", "longitude")
-    val radius = 10
-    val m = Measurement.Miles.id
-
-//    inquiryDF.rdd.map(row => {
-      //searchInquery(georecord, radius, maxresults, measurement)
-//      SearchInquery(new GeoRecord(row.getString(0), row.getDouble(1), row.getDouble(2)), radius, m)
-//    }).map(ds.search)
-
-  }
 }
