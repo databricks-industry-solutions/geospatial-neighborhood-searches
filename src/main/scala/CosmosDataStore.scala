@@ -1,5 +1,6 @@
 package com.databricks.labs.geospatial.searches
 
+import scala.collection.JavaConverters._
 import com.azure.cosmos._
 import com.azure.cosmos.models._
 import org.apache.spark.sql._
@@ -10,6 +11,12 @@ import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructTy
 
 object CosmosDS{
   def fromDF(df: DataFrame, config: Map[String, String])(implicit spark: SparkSession): DataStore = {
+    require(config.get("cosmosDatabaseName").isDefined &&
+      config.get("cosmosContainerName").isDefined &&
+      config.get("cosmosEndpoint").isDefined &&
+      config.get("cosmosMasterKey").isDefined,
+      "Configuration to connect to a CosmosDB Instance is required. Please make sure the following config variables are defined in your input to CosmosDS\ncosmosEndpoint\ncosmosMasterKey\ncosmosDatabaseName\ncosmosContainerName")
+
     import spark.implicits._
     val noSqlDF = df.select(col("id").cast(StringType), col("latitude").cast(DoubleType), col("longitude").cast(DoubleType)).rdd.map(row =>
       {
@@ -33,41 +40,59 @@ object CosmosDS{
 }
 
 class CosmosDS(config: Map[String, String])(implicit spark: SparkSession) extends DataStore{
-  lazy val  client = new CosmosClientBuilder()
+
+  def getNewClient: CosmosClient = {
+    new CosmosClientBuilder()
     .endpoint(config("cosmosEndpoint"))
     .key(config("cosmosMasterKey"))
     .consistencyLevel(ConsistencyLevel.EVENTUAL)
     .contentResponseOnWriteEnabled(true)
-    .buildAsyncClient()
-  lazy val container = client.getDatabase(config("cosmosDatabaseName")).getContainer(config("cosmosContainerName"))
+    .buildClient()
+  }
+
+  def getNewContainer(client: CosmosClient): CosmosContainer = {
+    client.getDatabase(config("cosmosDatabaseName")).getContainer(config("cosmosContainerName"))
+  }
 
   override def recordCount: Long = {
-    val connection = new CosmosClientBuilder()
-      .endpoint(config("cosmosEndpoint"))
-      .key(config("cosmosMasterKey"))
-      .consistencyLevel(ConsistencyLevel.EVENTUAL)
-      .contentResponseOnWriteEnabled(true)
-      .buildAsyncClient()
-    val table = client.getDatabase(config("cosmosDatabaseName")).getContainer(config("cosmosContainerName"))
-    val count = ???
-    c.close()
+    val client = getNewClient
+    val container = getNewContainer(client)
+    val query = "SELECT count(1) as cnt from c"
+    val result = container.queryItems(query, new CosmosQueryRequestOptions(), classOf[com.fasterxml.jackson.databind.node.ObjectNode])
+    val it = result.toIterable.iterator
+    if( ! it.hasNext ) throw new Exception("Unable to retrieve any results from query: " + query)
+    val cnt = it.next.get("cnt").asLong
+    client.close()
+    cnt
   }
   override def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = {
     rdd.mapPartitions(partition => {
+      val client = getNewClient
+      implicit val container = getNewContainer(client)
       val part = partition.map(search)
-      client.close()
+      client.close
       part
     })
   }
-  override def search(inquire: SearchInquery): SearchResult = {
-    val searchSpace = GeoSearch.getSearchSpaceGeohash(inquire.rec.latitude, inquire.rec.longitude, inquire.radius, inquire.ms)
+
+  def search(inquire: SearchInquery) (container: CosmosContainer): SearchResult = {
     val searchDistanceKM = GeoSearch.sizeAsKM(inquire.radius, inquire.ms)
     val start = System.nanoTime()
-
     var arr = Array[SearchResultValue]()
-    val serachResults = ???
+    val query = "SELECT * FROM c where c.id like '" + GeoSearch.getSearchSpaceGeohash(inquire.rec.latitude, inquire.rec.longitude, inquire.radius, inquire.ms) + "%'"
+    val result = container.queryItems(query, new CosmosQueryRequestOptions(), classOf[com.fasterxml.jackson.databind.node.ObjectNode]).toIterable.iterator
+    /*
+    while ( result.hasNext ){
+      result.map(groupedRows => {
+        groupedRows.get("value").iterator.flatMap(row => {
+          row.asText
 
-    new SearchResult(arr.length, arr, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
+        })
+      }).filter...
+     }
+     */
+    ???
+//    new SearchResult(arr.length, arr, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
   }
 }
 /*

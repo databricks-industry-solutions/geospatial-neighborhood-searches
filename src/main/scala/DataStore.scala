@@ -11,7 +11,6 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 
 trait DataStore{
-  def search(inquire: SearchInquery): SearchResult
   def search(rdd: RDD[SearchInquery]): RDD[SearchResult]
   def recordCount: Long
 
@@ -77,7 +76,7 @@ class SparkDS(df: DataFrame) extends DataStore{
         }
       })
 
-    new SearchResult(arr.length, arr, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
+    new SearchResult(arr.length, arr, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
   }
   override def recordCount = df.count()
 }

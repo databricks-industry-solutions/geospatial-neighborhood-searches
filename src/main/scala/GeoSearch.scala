@@ -20,14 +20,23 @@ case class GeoRecord(id: String, latitude: Double, longitude: Double){
   def getKey: String = GeoHash.withBitPrecision(latitude,longitude, 40).toBinaryString
   def getValue: String = this.asJson.noSpaces
   def distanceKM(other: GeoRecord): Double = GeoSearch.distance(new WGS84Point(latitude, longitude), new WGS84Point(other.latitude, other.longitude))
+
 }
-//decode[GeoRecord](json).right.get
+object GeoRecord {
+  def fromJson(rawJson:String): GeoRecord = {
+    io.circe.parser.parse(rawJson) match {
+      case Left(failure) => throw new Exception("Invalid GeoRecord json representation: " + rawJson)
+      case Right(json) =>
+        new GeoRecord(json.hcursor.get[String]("id").right.get, json.hcursor.get[Double]("latitude").right.get, json.hcursor.get[Double]("longitude").right.get)
+    }
+  }
+}
 
 case class SearchInquery(rec: GeoRecord, radius: Integer, maxResults: Integer=10, ms: Measurement.Value = Measurement.Mi) //function params to ask for nearyby recs
 
 case class SearchResultValue(value: GeoRecord, euclidDistance: Double, ms: Measurement.Value = Measurement.Mi)  //a single return value
 
-case class SearchResult(size: Integer, values: Array[SearchResultValue], searchTimerSeconds: Double) //a returned search
+case class SearchResult(size: Integer, values: Array[SearchResultValue], searchSpace: String, searchTimerSeconds: Double) //a returned search
 
 object GeoSearch{
   /*

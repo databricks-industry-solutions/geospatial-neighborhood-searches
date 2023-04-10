@@ -61,4 +61,16 @@ class GeoSearchTest extends AnyFunSuite{
     assert ( Math.abs(GeoSearch.distance(new WGS84Point(32.9697, -96.80322), new WGS84Point(29.46786, -98.53506)) - 422.759) < epsilon)
   }
 
+  test("Serialization and deserializaiton of Records"){
+
+    val s = """{"id":"344","latitude":34.932603,"longitude":-117.907324}"""
+    val g = GeoRecord.fromJson(s)
+    assert( g.id === "344" )
+    assert( g.latitude === 34.932603 )
+    assert( g.longitude === -117.907324 )
+
+    assert( g.getKey === "0100110110100001010011000111111011001001" )
+    assert (GeoRecord.fromJson(g.getValue).latitude === 34.932603 )
+    assert (GeoRecord.fromJson(g.getValue).longitude === -117.907324 )
+  }
 }
