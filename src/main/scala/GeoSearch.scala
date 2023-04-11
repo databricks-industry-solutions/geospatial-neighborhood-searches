@@ -2,14 +2,11 @@ package com.databricks.labs.geospatial.searches
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 import ch.hsr.geohash.{GeoHash, BoundingBox, WGS84Point}
-import java.sql.Connection
 
 object Measurement extends Enumeration {
   type Measurement = Value
   val Miles, Kilometers, Mi, Km = Value
 }
-
-
 
 /*
  * Represents a resultset from a search
@@ -34,7 +31,20 @@ object GeoRecord {
 
 case class SearchInquery(rec: GeoRecord, radius: Integer, maxResults: Integer=10, ms: Measurement.Value = Measurement.Mi) //function params to ask for nearyby recs
 
-case class SearchResultValue(value: GeoRecord, euclidDistance: Double, ms: Measurement.Value = Measurement.Mi)  //a single return value
+case class SearchResultValue(value: GeoRecord, euclideanDistance: Double, ms: Measurement.Value = Measurement.Mi)  //a single return value
+{
+  def >(other: SearchResultValue): Boolean = {
+    euclideanDistance > other.euclideanDistance
+  }
+  def <(other: SearchResultValue): Boolean = {
+    euclideanDistance < other.euclideanDistance
+  }
+}
+
+object SearchResultValue{
+  implicit def orderingByDistance[A <: SearchResultValue]: Ordering[A] =
+    Ordering.by(v => (v.euclideanDistance))
+}
 
 case class SearchResult(size: Integer, values: Array[SearchResultValue], searchSpace: String, searchTimerSeconds: Double) //a returned search
 
@@ -50,13 +60,22 @@ object GeoSearch{
   /*
    * Given a length and measurement, return KM
    */
-  def sizeAsKM(size: Integer ,ms: Measurement.Value = Measurement.Mi): Double = {
+  def sizeAsKM(size: Double ,ms: Measurement.Value = Measurement.Mi): Double = {
     ms match {
-      case Measurement.Miles | Measurement.Mi => milesToKm(size.toDouble)
+      case Measurement.Miles | Measurement.Mi => miToKm(size.toDouble)
       case Measurement.Kilometers | Measurement.Km => size.toDouble
       case _ => throw new Exception("Error: Unrecognized metric of measurement: " + ms)
     }
   }
+
+  def sizeAsMi(size: Double ,ms: Measurement.Value = Measurement.Mi): Double = {
+    ms match {
+      case Measurement.Miles | Measurement.Mi => size.toDouble
+      case Measurement.Kilometers | Measurement.Km => kmToMi(size.toDouble)
+      case _ => throw new Exception("Error: Unrecognized metric of measurement: " + ms)
+    }
+  }
+
 
 
   /*
@@ -88,7 +107,7 @@ object GeoSearch{
    *  
    */
   def getBoundingBox(center: WGS84Point, size: Integer, ms: Measurement.Value = Measurement.Mi): BoundingBox = {
-    val sizeKM = sizeAsKM(size,ms)
+    val sizeKM = sizeAsKM(size.toDouble,ms)
     val southWestCorner = addDistanceToLongitude(-1 * size, addDistanceToLatitude(-1 * size, center))
     val northEastCorner = addDistanceToLongitude(size, addDistanceToLatitude(size, center))
     new BoundingBox(southWestCorner, northEastCorner)
@@ -131,7 +150,7 @@ object GeoSearch{
   }
 
   val earthRadiusKm = 6371
-  val milesToKm = (x:Double) => x * 1.60934
+  val miToKm = (x:Double) => x * 1.60934
   val kmToMi = (x:Double) => x * 0.621371
 }
 

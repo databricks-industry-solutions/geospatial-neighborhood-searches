@@ -14,6 +14,22 @@ trait DataStore{
   def search(rdd: RDD[SearchInquery]): RDD[SearchResult]
   def recordCount: Long
 
+  /*
+   * Given search results return the closest n values
+   */
+  def topNElements(it: Iterator[SearchResultValue], n: Integer): collection.immutable.SortedSet[SearchResultValue] = {
+    it.foldLeft(collection.immutable.SortedSet.empty[SearchResultValue]) { (collection, item) => 
+      if(collection.size < n) collection + item
+      else {
+        if (collection.firstKey < item) collection - collection.firstKey + item
+        else collection
+      }
+    }
+  }
+
+  /*
+   * Create an rdd that allows implementation of a searchable (queryable) dataset
+   */
   def toInqueryRDD(df: DataFrame, radius: Integer, maxResults: Integer=10, metric: String = "Miles"): RDD[SearchInquery] = {
     val measurement = metric match {
       case s if s.toLowerCase.startsWith("k") => Measurement.Kilometers
@@ -26,6 +42,11 @@ trait DataStore{
         val g = new GeoRecord(row.getAs("id"), row.getAs("latitude"), row.getAs("longitude"))
         new SearchInquery(g, radius, maxResults, measurement)
       })
+  }
+
+  def fromSearchResultRDD(rdd: RDD[SearchResult])(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+    return rdd.toDF
   }
 }
 
@@ -55,11 +76,14 @@ object SparkDS {
   val distanceKmUDF = udf(distanceKm)
 }
 
+/*
+ * Sample of how to apply DataStore traits. Not meant for prod use (sparkContext doesn't reside on executors)
+ */
 class SparkDS(df: DataFrame) extends DataStore{
   override def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = ???
-  override def search(inquire: SearchInquery): SearchResult = {
+  def search(inquire: SearchInquery): SearchResult = {
     val searchSpace = GeoSearch.getSearchSpaceGeohash(inquire.rec.latitude, inquire.rec.longitude, inquire.radius, inquire.ms)
-    val searchDistanceKM = GeoSearch.sizeAsKM(inquire.radius, inquire.ms)
+    val searchDistanceKM = GeoSearch.sizeAsKM(inquire.radius.toDouble, inquire.ms)
 
     val start = System.nanoTime()
     var arr = Array[SearchResultValue]()
