@@ -39,20 +39,7 @@ object CosmosDS{
   }
 }
 
-class CosmosDS(config: Map[String, String])(implicit spark: SparkSession) extends DataStore{
-
-  def getNewClient: CosmosClient = {
-    new CosmosClientBuilder()
-    .endpoint(config("cosmosEndpoint"))
-    .key(config("cosmosMasterKey"))
-    .consistencyLevel(ConsistencyLevel.EVENTUAL)
-    .contentResponseOnWriteEnabled(true)
-    .buildClient()
-  }
-
-  def getNewContainer(client: CosmosClient): CosmosContainer = {
-    client.getDatabase(config("cosmosDatabaseName")).getContainer(config("cosmosContainerName"))
-  }
+class CosmosDS(config: Map[String, String])(implicit spark: SparkSession) extends DataStore with java.io.Serializable{
 
   override def recordCount: Long = {
     val client = getNewClient
@@ -65,14 +52,27 @@ class CosmosDS(config: Map[String, String])(implicit spark: SparkSession) extend
     client.close()
     cnt
   }
-  override def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = {
+
+  override def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = { 
     rdd.mapPartitions(partition => {
-      val client = getNewClient
-      val container = getNewContainer(client)
+      lazy val client = getNewClient
+      lazy val container = getNewContainer(client)
       val part = partition.map(row => search(row, container))
-      client.close
+      //client.close
       part
     })
+  }
+
+  def getNewClient: CosmosClient = {
+    new CosmosClientBuilder()
+    .endpoint(config("spark.cosmos.accountEndpoint"))
+    .key(config("spark.cosmos.accountKey"))
+    .contentResponseOnWriteEnabled(true)
+    .buildClient()
+  }
+
+  def getNewContainer(client: CosmosClient): CosmosContainer = {
+    client.getDatabase(config("spark.cosmos.database")).getContainer(config("spark.cosmos.container"))
   }
 
   def search(inquire: SearchInquery, container: CosmosContainer): SearchResult = {
@@ -90,17 +90,17 @@ class CosmosDS(config: Map[String, String])(implicit spark: SparkSession) extend
           case Measurement.Miles | Measurement.Mi => GeoSearch.sizeAsMi(distanceKM, inquire.ms)
           case _ => distanceKM
         }
-        if ( distanceKM <= searchDistanceKM )
+        if ( distanceKM > searchDistanceKM )
           None
         else Some(new SearchResultValue(rec,distanceResult,inquire.ms))
       }).filter(row => row.nonEmpty).map(row => row.get)
-    })
+    }).toArray
 
     if(results.size < inquire.maxResults)
-      new SearchResult(results.size, results.toArray, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
+      new SearchResult(inquire.rec, results.size, results, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
     else
-      new SearchResult(inquire.maxResults, topNElements(results, inquire.maxResults).toArray, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
-  }
+      new SearchResult(inquire.rec, inquire.maxResults, topNElements(results, inquire.maxResults).toArray, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
+    }
 }
 /*
  https://learn.microsoft.com/bs-latn-ba/azure/cosmos-db/nosql/quickstart-spark?tabs=scala

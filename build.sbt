@@ -37,7 +37,11 @@ val coreDependencies = Seq(
   * Here, we are are renaming the library so they co-exist in run-time and Spark uses its own version and Circe also
   * uses its own version.
   */
-assembly / assemblyShadeRules := Seq(ShadeRule.rename("shapeless.**" -> "new_shapeless.@1").inAll)
+
+assembly / assemblyShadeRules := Seq(
+  ShadeRule.rename("shapeless.**" -> "new_shapeless.@1").inAll,
+  ShadeRule.rename("cats.kernel.**" -> s"new_cats.kernel.@1").inAll
+)
 
 libraryDependencies ++= sparkDependencies ++ testDependencies ++ coreDependencies
 

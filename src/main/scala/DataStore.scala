@@ -17,7 +17,7 @@ trait DataStore{
   /*
    * Given search results return the closest n values
    */
-  def topNElements(it: Iterator[SearchResultValue], n: Integer): collection.immutable.SortedSet[SearchResultValue] = {
+  def topNElements(it: Array[SearchResultValue], n: Integer): collection.immutable.SortedSet[SearchResultValue] = {
     it.foldLeft(collection.immutable.SortedSet.empty[SearchResultValue]) { (collection, item) => 
       if(collection.size < n) collection + item
       else {
@@ -80,7 +80,7 @@ object SparkDS {
  * Sample of how to apply DataStore traits. Not meant for prod use (sparkContext doesn't reside on executors)
  */
 class SparkDS(df: DataFrame) extends DataStore{
-  override def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = ???
+  def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = ???
   def search(inquire: SearchInquery): SearchResult = {
     val searchSpace = GeoSearch.getSearchSpaceGeohash(inquire.rec.latitude, inquire.rec.longitude, inquire.radius, inquire.ms)
     val searchDistanceKM = GeoSearch.sizeAsKM(inquire.radius.toDouble, inquire.ms)
@@ -100,7 +100,7 @@ class SparkDS(df: DataFrame) extends DataStore{
         }
       })
 
-    new SearchResult(arr.length, arr, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
+    new SearchResult(inquire.rec, arr.length, arr, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
   }
   override def recordCount = df.count()
 }
