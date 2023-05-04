@@ -1,4 +1,4 @@
-package com.databricks.labs.geospatial.searches
+package com.databricks.industry.solutions.geospatial.searches
 
 import scala.collection.JavaConverters._
 import com.azure.cosmos._
@@ -21,9 +21,9 @@ object CosmosDS{
     val noSqlDF = df.select(col("id").cast(StringType), col("latitude").cast(DoubleType), col("longitude").cast(DoubleType)).rdd.map(row =>
       {
         val g = new GeoRecord(row.getAs("id"), row.getAs("latitude"), row.getAs("longitude"))
-        (g.getKey, Seq(g.getValue))
+        (g.getKey, Seq(g))
       }
-    ).reduceByKey((a,b) => a++b ).toDF("id", "value")
+    ).reduceByKey((a,b) => a++b ).map(x => NoSQLRecord(x._1, x._2.toList)).toDF
 
     // Configure Catalog Api to be used
     spark.conf.set(s"spark.sql.catalog.cosmosCatalog", "com.azure.cosmos.spark.CosmosCatalog")
@@ -39,7 +39,12 @@ object CosmosDS{
   }
 }
 
-class CosmosDS(config: Map[String, String])(implicit spark: SparkSession) extends DataStore with java.io.Serializable{
+class CosmosDS(val config: Map[String, String])(implicit spark: SparkSession) extends DataStore with java.io.Serializable{
+
+  // Configure Catalog Api to be used (this class can be called seperate from the companion object)
+  spark.conf.set(s"spark.sql.catalog.cosmosCatalog", "com.azure.cosmos.spark.CosmosCatalog")
+    spark.conf.set(s"spark.sql.catalog.cosmosCatalog.spark.cosmos.accountEndpoint", config("spark.cosmos.accountEndpoint"))
+    spark.conf.set(s"spark.sql.catalog.cosmosCatalog.spark.cosmos.accountKey", config("spark.cosmos.accountKey"))
 
   override def recordCount: Long = {
     val client = getNewClient
@@ -102,6 +107,10 @@ class CosmosDS(config: Map[String, String])(implicit spark: SparkSession) extend
       new SearchResult(inquire.rec, inquire.maxResults, topNElements(results, inquire.maxResults).toArray, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
     }
 }
+
+
+case class CosmosNoSQLRecord(var id: String="", var value: java.util.List[GeoRecord] = new java.util.ArrayList[GeoRecord])
+
 /*
  https://learn.microsoft.com/bs-latn-ba/azure/cosmos-db/nosql/quickstart-spark?tabs=scala
 val cosmosEndpoint = "https://REPLACEME.documents.azure.com:443/"

@@ -1,4 +1,4 @@
-package com.databricks.labs.geospatial.searches
+package com.databricks.industry.solutions.geospatial.searches
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest._
@@ -61,16 +61,27 @@ class GeoSearchTest extends AnyFunSuite{
     assert ( Math.abs(GeoSearch.distance(new WGS84Point(32.9697, -96.80322), new WGS84Point(29.46786, -98.53506)) - 422.759) < epsilon)
   }
 
-  test("Serialization and deserializaiton of Records"){
+  test("Serialization and deserializaiton of GeoRecord"){
 
-    val s = """{"id":"344","latitude":34.932603,"longitude":-117.907324}"""
-    val g = GeoRecord.fromJson(s)
+    val data = """{"id":"344","latitude":34.932603,"longitude":-117.907324}"""
+    val g = io.circe.parser.decode[GeoRecord](data).right.get
     assert( g.id === "344" )
     assert( g.latitude === 34.932603 )
     assert( g.longitude === -117.907324 )
 
     assert( g.getKey === "0100110110100001010011000111111011001001" )
-    assert (GeoRecord.fromJson(g.getValue).latitude === 34.932603 )
-    assert (GeoRecord.fromJson(g.getValue).longitude === -117.907324 )
+    assert (io.circe.parser.decode[GeoRecord](g.getValue).right.get.latitude === 34.932603 )
+    assert (io.circe.parser.decode[GeoRecord](g.getValue).right.get.longitude === -117.907324 )
+  }
+
+  test("Serialization and deserializaiton of NoSQLRecord"){
+    val data = """{"id":"0100110011111100001111111011011101100010","value":[{"id":"470-8262","latitude":32.67211,"longitude":-114.623966}, {"id":"999","latitude":12.642,"longitude":-99.713926}]}"""
+    val n = io.circe.parser.decode[NoSQLRecord](data).right.get
+    assert( n.id == "0100110011111100001111111011011101100010" )
+    assert( n.value.size == 2)
+    assert( n.value(0).id == "470-8262")
+    assert( n.value(1).id == "999")
+    assert( n.value(0).latitude == 32.67211 && n.value(0).longitude == -114.623966)
+    assert( n.value(1).latitude == 12.642 && n.value(1).longitude == -99.713926)
   }
 }

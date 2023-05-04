@@ -1,6 +1,6 @@
-package com.databricks.labs.geospatial.searches
+package com.databricks.industry.solutions.geospatial.searches
 
-import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._, io.circe.generic.semiauto.deriveDecoder
 import ch.hsr.geohash.{GeoHash, BoundingBox, WGS84Point}
 
 object Measurement extends Enumeration {
@@ -13,11 +13,10 @@ object Measurement extends Enumeration {
  *  @size - number of elements returned
  *  @values - array of points found in the search
  */
-case class GeoRecord(id: String, latitude: Double, longitude: Double){
+case class GeoRecord(val id: String="", val latitude: Double=0.0, val longitude: Double=0.0){
   def getKey: String = GeoHash.withBitPrecision(latitude,longitude, 40).toBinaryString
   def getValue: String = this.asJson.noSpaces
   def distanceKM(other: GeoRecord): Double = GeoSearch.distance(new WGS84Point(latitude, longitude), new WGS84Point(other.latitude, other.longitude))
-
 }
 object GeoRecord {
   def fromJson(rawJson:String): GeoRecord = {
@@ -25,6 +24,32 @@ object GeoRecord {
       case Left(failure) => throw new Exception("Invalid GeoRecord json representation: " + rawJson)
       case Right(json) =>
         new GeoRecord(json.hcursor.get[String]("id").right.get, json.hcursor.get[Double]("latitude").right.get, json.hcursor.get[Double]("longitude").right.get)
+    }
+  }
+  implicit val decodeGeoRecord: Decoder[GeoRecord] = new Decoder[GeoRecord] {
+    final def apply(c: HCursor): Decoder.Result[GeoRecord] = {
+      for {
+        id <- c.downField("id").as[String]
+        latitude <- c.downField("latitude").as[Double]
+        longitude <- c.downField("longitude").as[Double]
+      } yield{
+        GeoRecord(id, latitude, longitude)
+      }
+    }
+  }
+
+}
+
+case class NoSQLRecord(val id: String="", val value: Seq[GeoRecord]=Seq.empty)
+object NoSQLRecord{
+  implicit val decodeNoSQLRecord: Decoder[NoSQLRecord] = new Decoder[NoSQLRecord] {
+    final def apply(c: HCursor): Decoder.Result[NoSQLRecord] = {
+      for {
+        id <- c.downField("id").as[String]
+        value <-c.downField("value").as[Seq[GeoRecord]]
+      } yield{
+        NoSQLRecord(id, value)
+      }
     }
   }
 }

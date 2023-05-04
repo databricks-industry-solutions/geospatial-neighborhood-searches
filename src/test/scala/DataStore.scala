@@ -1,4 +1,4 @@
-package com.databricks.labs.geospatial.searches
+package com.databricks.industry.solutions.geospatial.searches
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest._

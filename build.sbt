@@ -3,7 +3,7 @@ name := "geospatial-searches"
 version := "0.0.1"
 
 lazy val scala212 = "2.12.8"
-lazy val sparkVersion = sys.env.getOrElse("SPARK_VERSION", "3.2.1")
+lazy val sparkVersion = sys.env.getOrElse("SPARK_VERSION", "3.3.1")
 ThisBuild / organization := "com.databricks.labs"
 ThisBuild / organizationName := "Databricks, Inc."
 
@@ -27,9 +27,12 @@ val coreDependencies = Seq(
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
+   //Cosmos 
   "com.azure.cosmos.spark" % "azure-cosmos-spark_3-2_2-12" % "4.11.2" % "provided",
   "com.audienceproject" %% "spark-dynamodb" % "1.1.2" % "provided",
   "com.azure" % "azure-cosmos" % "4.39.0" % "provided",
+  //Mongo 
+  "org.mongodb.spark" %% "mongo-spark-connector" % "10.1.1" % "provided",
 )
 
 /** Shapeless is one of the Spark dependencies. At run-time, they clash and Spark's shapeless package takes
