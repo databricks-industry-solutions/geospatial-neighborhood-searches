@@ -70,10 +70,13 @@ class CosmosDS(val config: Map[String, String])(implicit spark: SparkSession) ex
 
   def getNewClient: CosmosClient = {
     new CosmosClientBuilder()
-    .endpoint(config("spark.cosmos.accountEndpoint"))
-    .key(config("spark.cosmos.accountKey"))
-    .contentResponseOnWriteEnabled(true)
-    .buildClient()
+      .endpoint(config("spark.cosmos.accountEndpoint"))
+      .key(config("spark.cosmos.accountKey"))
+      .directMode( (DirectConnectionConfig.getDefaultConfig
+        .setIdleEndpointTimeout(java.time.Duration.ZERO.plusMinutes(1))))
+      .preferredRegions(Seq("East US", "West US"))
+      .contentResponseOnWriteEnabled(true)
+      .buildAsyncClient()
   }
 
   def getNewContainer(client: CosmosClient): CosmosContainer = {
