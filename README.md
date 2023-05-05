@@ -40,7 +40,12 @@ The following libraries need installed to your cluster via Maven coordinates
     "indexingMode": "none"
 }
 ```
-### Running 
+
+### Input 
+
+Given two tables with identifcal oclumns (id:STRING, latitude:DOUBLE, longitude:DOUBLE), perform a geospatial search of all points within the specified radius 
+
+### Running the setup configurations
 
 ``` scala
 import com.azure.cosmos.spark._, com.azure.cosmos.spark.CosmosConfig, com.azure.cosmos.spark.CosmosAccountConfig, com.databricks.industry.solutions.geospatial.searches._
@@ -61,9 +66,27 @@ implicit val cfg = Map("spark.cosmos.accountEndpoint" -> cosmosEndpoint,
   "spark.cosmos.write.bulk.enabled" -> "true",     
   "spark.cosmos.write.strategy" -> "ItemOverwrite"
 )
+```
 
-//Create NoSQL DataStore from sample VA Hospital location dataset 
+### Running the search algorithm
+``` scala
+//Populate the NoSQL DataStore from the first dataset (VA Hospital location dataset)
 val ds = CosmosDS.fromDF(spark.table("geospatial_searches.va_facilities"), cfg)
+
+//Set radius to search for
+val radius=25
+val maxResults = 5
+val measurementType="miles"
+
+//Secondary dataset search (We're using same dataset for both tables)
+val searchRDD = ds.toInqueryRDD(spark.sql(""" select * from geospatial_searches.va_facilities"""), radius, maxResults, measurementType).repartition(5) //limit to 5, container in Cosmos is fairly small (400RU) and 5 will be our max degree of parallilsm 
+
+//Perform search and save results
+val resultRDD = ds.asInstanceOf[CosmosDS].search(searchRDD)
+ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatial_searches.va_facility_results")
+
+//Check average searchtime 
+select avg(searchTimerSeconds) from geospatial_searches.va_facilities_results
 ```
 
 <img width="500" alt="add_repo" src="https://user-images.githubusercontent.com/4445837/177207338-65135b10-8ccc-4d17-be21-09416c861a76.png">
