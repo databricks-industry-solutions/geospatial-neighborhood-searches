@@ -1,5 +1,6 @@
-package com.databricks.labs.geospatial.searches
+package com.databricks.industry.solutions.geospatial.searches
 
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._, io.circe.generic.semiauto.deriveDecoder
 import ch.hsr.geohash.{GeoHash, BoundingBox, WGS84Point}
 
 object Measurement extends Enumeration {
@@ -7,31 +8,117 @@ object Measurement extends Enumeration {
   val Miles, Kilometers, Mi, Km = Value
 }
 
+/*
+ * Represents a resultset from a search
+ *  @size - number of elements returned
+ *  @values - array of points found in the search
+ */
+case class GeoRecord(val id: String="", val latitude: Double=0.0, val longitude: Double=0.0){
+  def getKey: String = GeoHash.withBitPrecision(latitude,longitude, 40).toBinaryString
+  def getValue: String = this.asJson.noSpaces
+  def distanceKM(other: GeoRecord): Double = GeoSearch.distance(new WGS84Point(latitude, longitude), new WGS84Point(other.latitude, other.longitude))
+}
+object GeoRecord {
+  def fromJson(rawJson:String): GeoRecord = {
+    io.circe.parser.parse(rawJson) match {
+      case Left(failure) => throw new Exception("Invalid GeoRecord json representation: " + rawJson)
+      case Right(json) =>
+        new GeoRecord(json.hcursor.get[String]("id").right.get, json.hcursor.get[Double]("latitude").right.get, json.hcursor.get[Double]("longitude").right.get)
+    }
+  }
+  implicit val decodeGeoRecord: Decoder[GeoRecord] = new Decoder[GeoRecord] {
+    final def apply(c: HCursor): Decoder.Result[GeoRecord] = {
+      for {
+        id <- c.downField("id").as[String]
+        latitude <- c.downField("latitude").as[Double]
+        longitude <- c.downField("longitude").as[Double]
+      } yield{
+        GeoRecord(id, latitude, longitude)
+      }
+    }
+  }
+
+}
+
+case class NoSQLRecord(val id: String="", val value: Seq[GeoRecord]=Seq.empty)
+object NoSQLRecord{
+  implicit val decodeNoSQLRecord: Decoder[NoSQLRecord] = new Decoder[NoSQLRecord] {
+    final def apply(c: HCursor): Decoder.Result[NoSQLRecord] = {
+      for {
+        id <- c.downField("id").as[String]
+        value <-c.downField("value").as[Seq[GeoRecord]]
+      } yield{
+        NoSQLRecord(id, value)
+      }
+    }
+  }
+}
+
+case class SearchInquery(rec: GeoRecord, radius: Integer, maxResults: Integer=10, ms: Measurement.Value = Measurement.Mi) //function params to ask for nearyby recs
+
+case class SearchResultValue(value: GeoRecord, euclideanDistance: Double, ms: Measurement.Value = Measurement.Mi)  //a single return value
+{
+  def >(other: SearchResultValue): Boolean = {
+    euclideanDistance > other.euclideanDistance
+  }
+  def <(other: SearchResultValue): Boolean = {
+    euclideanDistance < other.euclideanDistance
+  }
+}
+
+object SearchResultValue{
+  implicit def orderingByDistance[A <: SearchResultValue]: Ordering[A] =
+    Ordering.by(v => (v.euclideanDistance))
+}
+
+case class SearchResult(g: GeoRecord, size: Integer, values: Iterator[SearchResultValue], searchSpace: String, searchTimerSeconds: Double) //a returned search
+
 object GeoSearch{
-  //https://gis.stackexchange.com/questions/142326/calculating-longitude-length-in-miles
-//  private val milesPerLatitude = ???
-//  private val milesPerLongitude = 55.051 //varies 0 to 69.172
-
-
-
   /*
    * Left to right intersection of two strings
    *   for this function we are comparing binary representations of geohashes 
-   *
    */
   def stringIntersect(a: String, b: String): String = {
     (a zip b).takeWhile( x => x._1 == x._2 ).map(_._1).mkString
   }
 
   /*
+   * Given a length and measurement, return KM
+   */
+  def sizeAsKM(size: Double ,ms: Measurement.Value = Measurement.Mi): Double = {
+    ms match {
+      case Measurement.Miles | Measurement.Mi => miToKm(size.toDouble)
+      case Measurement.Kilometers | Measurement.Km => size.toDouble
+      case _ => throw new Exception("Error: Unrecognized metric of measurement: " + ms)
+    }
+  }
+
+  def sizeAsMi(size: Double ,ms: Measurement.Value = Measurement.Mi): Double = {
+    ms match {
+      case Measurement.Miles | Measurement.Mi => size.toDouble
+      case Measurement.Kilometers | Measurement.Km => kmToMi(size.toDouble)
+      case _ => throw new Exception("Error: Unrecognized metric of measurement: " + ms)
+    }
+  }
+
+
+
+  /*
+   * Given a search space, return the intersected geohash 
+   */
+  def getSearchSpaceGeohash(latitude: Double, longitude: Double, size: Integer, ms: Measurement.Value = Measurement.Mi, precision: Integer = 40): String = {
+    getIntersectedGeohash(getBoundingBox(new WGS84Point(latitude, longitude), size, ms), precision).toBinaryString
+  }
+
+  /*
    *  Get the intersection of 4 corner geohashes of a bounding box
    *   @return the minimum Geohash that encompasses all 4 corners 
    */
-  def getIntersectedGeohash(bb: BoundingBox): GeoHash = {
-    val intersection = List(GeoHash.withBitPrecision(bb.getSouthWestCorner.getLatitude, bb.getSouthWestCorner.getLongitude, 64).toBinaryString
-      ,GeoHash.withBitPrecision(bb.getSouthEastCorner.getLatitude, bb.getSouthEastCorner.getLongitude, 64).toBinaryString
-      ,GeoHash.withBitPrecision(bb.getNorthWestCorner.getLatitude, bb.getNorthWestCorner.getLongitude, 64).toBinaryString)
-      .foldLeft(GeoHash.withBitPrecision(bb.getNorthEastCorner.getLatitude, bb.getNorthEastCorner.getLongitude, 64).toBinaryString)(stringIntersect)
+  def getIntersectedGeohash(bb: BoundingBox, precision: Integer = 40): GeoHash = {
+    val intersection = List(GeoHash.withBitPrecision(bb.getSouthWestCorner.getLatitude, bb.getSouthWestCorner.getLongitude, precision).toBinaryString
+      ,GeoHash.withBitPrecision(bb.getSouthEastCorner.getLatitude, bb.getSouthEastCorner.getLongitude, precision).toBinaryString
+      ,GeoHash.withBitPrecision(bb.getNorthWestCorner.getLatitude, bb.getNorthWestCorner.getLongitude, precision).toBinaryString)
+      .foldLeft(GeoHash.withBitPrecision(bb.getNorthEastCorner.getLatitude, bb.getNorthEastCorner.getLongitude, precision).toBinaryString)(stringIntersect)
     GeoHash.fromBinaryString(intersection)
   }
 
@@ -40,43 +127,56 @@ object GeoSearch{
    *  @param center - center of the box
    *  @param ms - unit of measurement to use (miles defaulted) 
    *  @param size - integer value of size of unit of measurement ms
+   *
+   *  @return - a minimum covering Geohash that covers all 4 points in a bounding box 
    *  
    */
-  def getBoundingBox(center: WGS84Point, size: Int, ms: Measurement.Value = Measurement.Mi): BoundingBox = {
-    val northEastCorner = ???
-    val southWestCorner = ???
-
-    ???
+  def getBoundingBox(center: WGS84Point, size: Integer, ms: Measurement.Value = Measurement.Mi): BoundingBox = {
+    val sizeKM = sizeAsKM(size.toDouble,ms)
+    val southWestCorner = addDistanceToLongitude(-1 * size, addDistanceToLatitude(-1 * size, center))
+    val northEastCorner = addDistanceToLongitude(size, addDistanceToLatitude(size, center))
+    new BoundingBox(southWestCorner, northEastCorner)
   }
 
-  def addDistanceToLongitude(point: WGS84Point, ms: Measurement.Value = Measurement.Mi): WGS84Point = {
-    ???
+  /*
+   * Travel distance in Longitude (east/west)
+   *  @point - starting point
+   *  @distance - KM distance to travel
+   *  @return - new point representing the distance traveled
+   *
+   *  newLon = oldLon + (distanceKM * (1 / ((pi / 180) * radiusEathKM) )  /  (cos(latitude) * (pi / 180))
+   */
+  def addDistanceToLongitude(distance: Integer, point: WGS84Point): WGS84Point = {
+    new WGS84Point(point.getLatitude, {point.getLongitude + (distance * (1 / ((Math.PI / 180) * earthRadiusKm))) / Math.cos(point.getLatitude * (Math.PI / 180)) })
   }
 
-  def addDistanceToLatitude(point: WGS84Point, ms: Measurement.Value = Measurement.Mi): WGS84Point = {
-    ???
+  /*
+   * Travel distance in Latitude (north/south) 
+   *  @param distance to travel in KM
+   *  @param poin lat/long to travel along
+   *
+   *  @returns new point
+   *  newLat = oldLat +  (distanceKM / radiusOfEarthKM) * (180 / pi) 
+   */
+  def addDistanceToLatitude(distance: Integer, point: WGS84Point): WGS84Point = {
+    new WGS84Point({point.getLatitude + (distance / earthRadiusKm.toDouble) * (180 / Math.PI)}, point.getLongitude)
   }
 
   /*
    * Return distance in KM between two points using law of cosines
+   *  Law of Cosines Distance 
    */
-  val earthRadiusKM = 6371
-  def lawOfCosinesDistance(pointA: WGS84Point, pointB: WGS84Point): Double = {
-    Math.acos(Math.sin(pointA.getLatitude) * Math.sin(pointB.getLatitude) + Math.cos(pointA.getLatitude) * Math.cos(pointB.getLatitude) * Math.cos(pointB.getLongitude - pointB.getLongitude)) * earthRadiusKM
+  def distance(pointA: WGS84Point, pointB: WGS84Point): Double = {
+    val theta = pointA.getLongitude - pointB.getLongitude
+    val dist = Math.acos(Math.sin(Math.toRadians(pointA.getLatitude)) * Math.sin(Math.toRadians(pointB.getLatitude)) +
+      Math.cos(Math.toRadians(pointA.getLatitude)) * Math.cos(Math.toRadians(pointB.getLatitude)) *
+      Math.cos(Math.toRadians(theta)))
+    dist * earthRadiusKm
   }
 
-  val milesToKm = (x:Double) => x * 1.60934
+  val earthRadiusKm = 6371
+  val miToKm = (x:Double) => x * 1.60934
   val kmToMi = (x:Double) => x * 0.621371
 }
-
-//new_latitude  = latitude  + (dy / r_earth) * (180 / pi);
-//new_longitude = longitude + (dx / r_earth) * (180 / pi) / cos(latitude * pi/180);
-
-/*
- * Represents a resultset from a search
- *  @size - number of elements returned
- *  @values - array of points found in the search
- */
-case class SearchResult(size: Int, values: Array[String])
 
 
