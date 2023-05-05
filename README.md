@@ -18,7 +18,10 @@ The following libraries need installed to your cluster via Maven coordinates
 
 | library                                | description             | license    | source                                              | coordinates |
 |----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
-| Geohashes                                 | Converting Lat/Long to a Geohash      | MIT        | https://github.com/kungfoo/geohash-java                      |  ch.hsr:geohash:1.4.0 |
+| Geohashes  | Converting Lat/Long to a Geohash      | Apache 2.0       | https://github.com/kungfoo/geohash-java                      |  ch.hsr:geohash:1.4.0 |
+| Spark + Azure Cosmos | Connecting DataFrames to CosmosDB | MIT | https://github.com/Azure/azure-cosmosdb-spark | com.azure.cosmos.spark:azure-cosmos-spark_3-2_2-12:4.11.2 |
+| Azure Cosmos Client | Connectivity to CosmosDB | MIT | https://github.com/Azure/azure-cosmosdb-java | com.azure:azure-cosmos:4.39.0 | 
+
 
 ## Getting started
 
