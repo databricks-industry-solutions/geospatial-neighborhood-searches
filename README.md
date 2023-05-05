@@ -29,7 +29,17 @@ The following libraries need installed to your cluster via Maven coordinates
 
 [Geospatial Searches in Azure Demo](https://eastus2.azuredatabricks.net/?o=5206439413157315#notebook/1011273009121479/command/4188342588155548)
 
+### Pre-requisites 
 
+1. Attaching library coordinates above to the cluster 
+2. Attaching the library from this repo
+3. An Azure NoSQL Container for document storage 
+  (Recommended setting index policy on Cosmos)
+``` json
+{
+    "indexingMode": "none"
+}
+```
 
 <img width="500" alt="add_repo" src="https://user-images.githubusercontent.com/4445837/177207338-65135b10-8ccc-4d17-be21-09416c861a76.png">
 
