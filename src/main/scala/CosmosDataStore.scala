@@ -108,9 +108,9 @@ class CosmosDS(val config: Map[String, String])(implicit spark: SparkSession) ex
     }).filter(row => row.nonEmpty).map(row => row.get)
 
     if(results.size < inquire.maxResults)
-      new SearchResult(inquire.rec, results.size, results, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
+      new SearchResult(inquire.rec, results, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
     else
-      new SearchResult(inquire.rec, inquire.maxResults, topNElements(results, inquire.maxResults), searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
+      new SearchResult(inquire.rec, topNElements(results, inquire.maxResults), searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
   }
 }
 
