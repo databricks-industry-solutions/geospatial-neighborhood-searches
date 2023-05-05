@@ -1,15 +1,6 @@
 ![image](https://user-images.githubusercontent.com/86326159/206014015-a70e3581-e15c-4a10-95ef-36fd5a560717.png)
 
-Scaling Geospatial Searches
-
-___
-<aaron.zavora@databricks.com>
-
-___
-
-
-IMAGE TO REFERENCE ARCHITECTURE - basically this https://i.stack.imgur.com/oLUgi.gif with enhanced datastructure implementations
-
+# Scaling Geospatial Searches
 ___
 
 &copy; 2022 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the Databricks License [https://databricks.com/db-license-source].  All included or referenced third party libraries are subject to the licenses set forth below.
@@ -104,19 +95,27 @@ spark.table("geospatial_searches.va_facility_results").select("searchTimerSecond
 
 ```
 
+### Performance 
+
+Assuming ~avg request time = 0.1
+
+1 core =  10 requests / second ~= 600 / minute ~= 36,000 / hour 
+32 cores = 1.15M / hour
+
+**41 DBUs/hour in Azure === 11.5M searches / hour**
+Azure Standard F_16 
+ - (32GB, 16 Cores per node) 
+ - 20 Workers  
+ - 320 Cores 
+ - 41 DBUs
+ - 11.5M records hour
 
 
+### Roadmap 
 
-<img width="500" alt="add_repo" src="https://user-images.githubusercontent.com/4445837/177207338-65135b10-8ccc-4d17-be21-09416c861a76.png">
-
-To start using a solution accelerator in Databricks simply follow these steps: 
-
-1. Clone solution accelerator repository in Databricks using [Databricks Repos](https://www.databricks.com/product/repos)
-2. Attach the `RUNME` notebook to any cluster and execute the notebook via Run-All. A multi-step-job describing the accelerator pipeline will be created, and the link will be provided. The job configuration is written in the RUNME notebook in json format. 
-3. Execute the multi-step-job to see how the pipeline runs. 
-4. You might want to modify the samples in the solution accelerator to your need, collaborate with other users and run the code samples against your own data. To do so start by changing the Git remote of your repository  to your organization’s repository vs using our samples repository (learn more). You can now commit and push code, collaborate with other user’s via Git and follow your organization’s processes for code development.
-
-The cost associated with running the accelerator is the user's responsibility.
+Given the current limitation is on RUs spent per request (for non-index scans this is very expensive in Azure). 
+(1) Push non-index searches to use SparkSQL Serverless
+(2) MongoDB for consistency across clouds
 
 
 ## Project support 
