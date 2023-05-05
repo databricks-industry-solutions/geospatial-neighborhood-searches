@@ -14,9 +14,11 @@ ___
 
 &copy; 2022 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the Databricks License [https://databricks.com/db-license-source].  All included or referenced third party libraries are subject to the licenses set forth below.
 
-| library                                | description             | license    | source                                              |
-|----------------------------------------|-------------------------|------------|-----------------------------------------------------|
-| PyYAML                                 | Reading Yaml files      | MIT        | https://github.com/yaml/pyyaml                      |
+The following libraries need installed to your cluster via Maven coordinates
+
+| library                                | description             | license    | source                                              | coordinates |
+|----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
+| Geohashes                                 | Converting Lat/Long to a Geohash      | MIT        | https://github.com/kungfoo/geohash-java                      |  ch.hsr:geohash:1.4.0 |
 
 ## Getting started
 
