@@ -40,7 +40,9 @@ object SparkDS {
  */
 class SparkDS(df: DataFrame) extends DataStore{
   def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = ???
-  def search(inquire: SearchInquery): SearchResult = {
+  def search(inquire: SearchInquery): SearchResult = ??? 
+  /*
+   {
     val searchSpace = GeoSearch.getSearchSpaceGeohash(inquire.rec.latitude, inquire.rec.longitude, inquire.radius, inquire.ms)
     val searchDistanceKM = GeoSearch.sizeAsKM(inquire.radius.toDouble, inquire.ms)
 
@@ -60,6 +62,8 @@ class SparkDS(df: DataFrame) extends DataStore{
       })
 
     new SearchResult(inquire.rec, arr.length, arr, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
-  }
-  override def recordCount = df.count()
+ }
+  */
+    override def recordCount = df.count()
+
 }

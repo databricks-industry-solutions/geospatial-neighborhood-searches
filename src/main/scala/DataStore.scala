@@ -17,14 +17,14 @@ trait DataStore{
   /*
    * Given search results return the closest n values
    */
-  def topNElements(it: Array[SearchResultValue], n: Integer): collection.immutable.SortedSet[SearchResultValue] = {
+  def topNElements(it: Iterator[SearchResultValue], n: Integer): Iterator[SearchResultValue] = {
     it.foldLeft(collection.immutable.SortedSet.empty[SearchResultValue]) { (collection, item) => 
       if(collection.size < n) collection + item
       else {
         if (collection.firstKey < item) collection - collection.firstKey + item
         else collection
       }
-    }
+    }.iterator
   }
 
   /*

@@ -71,7 +71,7 @@ object SearchResultValue{
     Ordering.by(v => (v.euclideanDistance))
 }
 
-case class SearchResult(g: GeoRecord, size: Integer, values: Array[SearchResultValue], searchSpace: String, searchTimerSeconds: Double) //a returned search
+case class SearchResult(g: GeoRecord, size: Integer, values: Iterator[SearchResultValue], searchSpace: String, searchTimerSeconds: Double) //a returned search
 
 object GeoSearch{
   /*
