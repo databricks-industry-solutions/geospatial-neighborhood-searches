@@ -61,21 +61,29 @@ implicit val cfg = Map("spark.cosmos.accountEndpoint" -> cosmosEndpoint,
 
 ### Running the search algorithm
 ``` scala
-//Populate the NoSQL DataStore from the first dataset (VA Hospital location dataset)
-val ds = CosmosDS.fromDF(spark.table("geospatial_searches.va_facilities"), cfg)
-
 //Set radius to search for
 val radius=25
 val maxResults = 5
 val measurementType="miles"
 
+//Set the tables for search (same table in this case)
+val targetTable = "geospatial_searches.va_facilities"
+val searchTable = "geospatial_searches.va_facilities"
+
+//Populate the NoSQL DataStore from the first dataset (VA Hospital location dataset)
+val ds = CosmosDS.fromDF(spark.table(searchTable), cfg)
+
 //Secondary dataset search (We're using same dataset for both tables)
-val searchRDD = ds.toInqueryRDD(spark.sql(""" select * from geospatial_searches.va_facilities"""), radius, maxResults, measurementType).repartition(5) //limit to 5, container in Cosmos is fairly small (400RU) and 5 will be our max degree of parallilsm 
+val searchRDD = ds.toInqueryRDD(spark.sql(targetTable), radius, maxResults, measurementType).repartition(5) //limit to 5, container in Cosmos is fairly small (400RU) and 5 will be our max degree of parallilsm 
 
 //Perform search and save results
 val resultRDD = ds.asInstanceOf[CosmosDS].search(searchRDD)
 ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatial_searches.va_facility_results")
+```
 
+### Performance 
+
+``` scala
 //Check performance of searches
 
 //Avg 0.3810 seconds per request
@@ -92,10 +100,7 @@ spark.table("geospatial_searches.va_facility_results").select("searchTimerSecond
         .stat
         .approxQuantile("searchTimerSeconds", Array(0.75), 0.001) //median
         .head
-
 ```
-
-### Performance 
 
 Assuming ~avg request time = 0.1
 
