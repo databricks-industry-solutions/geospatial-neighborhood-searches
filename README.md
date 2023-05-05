@@ -25,7 +25,7 @@ The following libraries need installed to your cluster via Maven coordinates
 
 ## Getting started
 
-### Internal Notebook & Getting started only!!!
+### Internal ONLY!!! Notebook & Getting Started
 
 [Geospatial Searches in Azure Demo](https://eastus2.azuredatabricks.net/?o=5206439413157315#notebook/1011273009121479/command/4188342588155548)
 
