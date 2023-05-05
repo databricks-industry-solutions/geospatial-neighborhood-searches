@@ -85,9 +85,27 @@ val searchRDD = ds.toInqueryRDD(spark.sql(""" select * from geospatial_searches.
 val resultRDD = ds.asInstanceOf[CosmosDS].search(searchRDD)
 ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatial_searches.va_facility_results")
 
-//Check average searchtime 
-select avg(searchTimerSeconds) from geospatial_searches.va_facilities_results
+//Check performance of searches
+
+//Avg 0.3810 seconds per request
+spark.sql("select avg(searchTimerSeconds) from geospatial_searches.va_facilities_results")
+
+//Median 0.086441679 seconds per request
+spark.table("geospatial_searches.va_facility_results").select("searchTimerSeconds")
+        .stat
+        .approxQuantile("searchTimerSeconds", Array(0.5), 0.001) //median
+        .head
+
+//75th percentile 0.528239604 seconds per request
+spark.table("geospatial_searches.va_facility_results").select("searchTimerSeconds")
+        .stat
+        .approxQuantile("searchTimerSeconds", Array(0.75), 0.001) //median
+        .head
+
 ```
+
+
+
 
 <img width="500" alt="add_repo" src="https://user-images.githubusercontent.com/4445837/177207338-65135b10-8ccc-4d17-be21-09416c861a76.png">
 
