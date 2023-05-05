@@ -104,8 +104,8 @@ class CosmosDS(val config: Map[String, String])(implicit spark: SparkSession) ex
           None
         else
           Some(new SearchResultValue(rec,distanceResult,inquire.ms))
-      }).filter(row => row.nonEmpty).map(row => row.get)
-    })
+      })
+    }).filter(row => row.nonEmpty).map(row => row.get)
 
     if(results.size < inquire.maxResults)
       new SearchResult(inquire.rec, results.size, results, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
