@@ -25,7 +25,7 @@ The following libraries need installed to your cluster via Maven coordinates
 
 ## Getting started
 
-### Internal Notebook
+### Internal Notebook & Getting started only!!!
 
 [Geospatial Searches in Azure Demo](https://eastus2.azuredatabricks.net/?o=5206439413157315#notebook/1011273009121479/command/4188342588155548)
 
@@ -39,6 +39,31 @@ The following libraries need installed to your cluster via Maven coordinates
 {
     "indexingMode": "none"
 }
+```
+### Running 
+
+``` scala
+import com.azure.cosmos.spark._, com.azure.cosmos.spark.CosmosConfig, com.azure.cosmos.spark.CosmosAccountConfig, com.databricks.industry.solutions.geospatial.searches._
+implicit val spark2 = spark
+
+// Provide Connection Details, replace the below settings
+val cosmosEndpoint = "https://geospatial-adz.documents.azure.com:443/"
+val cosmosMasterKey = "unsCqFfHgmm0eqhYoft9vuVSRXuLBTuC34yukGJ10inGZR2s4FYO66BfuaN2CAGIQWwW1zFfzzH3ACDbJdYMfw=="
+val cosmosDatabaseName = "ToDoList"
+val cosmosContainerName = "Geo"
+
+// Configure NoSQL Connection Params
+//https://github.com/Azure/azure-sdk-for-java/blob/main/sdk/cosmos/azure-cosmos-spark_3_2-12/docs/migration.md
+implicit val cfg = Map("spark.cosmos.accountEndpoint" -> cosmosEndpoint,
+  "spark.cosmos.accountKey" -> cosmosMasterKey,
+  "spark.cosmos.database" -> cosmosDatabaseName,
+  "spark.cosmos.container" -> cosmosContainerName,
+  "spark.cosmos.write.bulk.enabled" -> "true",     
+  "spark.cosmos.write.strategy" -> "ItemOverwrite"
+)
+
+//Create NoSQL DataStore from sample VA Hospital location dataset 
+val ds = CosmosDS.fromDF(spark.table("geospatial_searches.va_facilities"), cfg)
 ```
 
 <img width="500" alt="add_repo" src="https://user-images.githubusercontent.com/4445837/177207338-65135b10-8ccc-4d17-be21-09416c861a76.png">
