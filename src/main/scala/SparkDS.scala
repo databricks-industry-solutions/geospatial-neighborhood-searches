@@ -29,7 +29,7 @@ object SparkInMemoryDS {
  *
  */
 object SparkServerlessDS {
-  def fromDF(df: DataFrame, jdbcUrl: String, tempTableName: String)(implicit spark: SparkSession): DataStore = {
+  def fromDF(df: DataFrame, jdbcURL: String, tempTableName: String)(implicit spark: SparkSession): DataStore = {
     import spark.implicits._
     val noSqlDF = df.select(col("id").cast(StringType), col("latitude").cast(DoubleType), col("longitude").cast(DoubleType)).rdd.map(row =>
       {
@@ -38,13 +38,14 @@ object SparkServerlessDS {
       }
     ).reduceByKey((a,b) => a++b ).map(x => NoSQLRecord(x._1, x._2.toList)).toDF("key", "value")
     noSqlDF.write.mode("overwrite").saveAsTable(tempTableName)
-    new SparkServerlessDS(jdbcUrl, tempTableName)
+    new SparkServerlessDS(tempTableName, jdbcURL)
   }
 }
 
 class SparkServerlessDS(val tableName: String, val jdbcURL: String) extends DataStore with java.io.Serializable{
 
   def connect(jdbcURL: String): Connection = {
+    Class.forName("com.simba.spark.jdbc.Driver")
     DriverManager.getConnection(jdbcURL)
   }
 
