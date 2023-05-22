@@ -10,9 +10,13 @@ Determining nearby locations to a point on a map becomes difficult as datasets g
 
 This repo provides a solution that provides accuracy and scale using Spark's distributed data processing as well as high performant caching. In this repo we demonstrate how you can use Spark's Serverless SQL for a high performant cache or a cloud's NoSQL (the example provided here is using CosmosDB). This can be extended to other NoSQLs like BigTable, DynamoDB, and MongoDB. 
 
-Results are calculated by specifying a radius to compare two datasets against each other and return all values within a radius.
+Specifying a radius returns all points contained inside the associated point of origin.  
 
 ![image](./img/upmc_childrens_hospital.png?raw=true)
+
+And given many points of origin, all associated values are returned for each origin of interest.
+
+![image](./img/many_locations.png?raw=true)
 
 ## Getting started
 
