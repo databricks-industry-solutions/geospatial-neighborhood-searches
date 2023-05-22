@@ -16,11 +16,28 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 [Geospatial Searches in Azure Demo](https://eastus2.azuredatabricks.net/?o=5206439413157315#notebook/1011273009121479/command/4188342588155548)
 
-### Pre-requisites 
+### Installation 
 
-1. Attaching library coordinates above to the cluster 
-2. Attaching the library from this repo
-3. An Azure NoSQL Container for document storage 
+1. Attach jar from repo as a cluster library
+
+#### Install Using Spark Serverless SQL as a data cache (good for hundreds of thousands of comparisons)
+
+| library                                | description             | license    | source                                              | coordinates |
+|----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
+| Databricks JDBC | Connecting to Spark via JDBC | Databricks JDBC Driver License | https://central.sonatype.com/artifact/com.databricks/databricks-jdbc/ | com.databricks:databricks-jdbc:2.6.25|
+
+
+2. Install Databricks JDBC related libraries above using Maven coordinates
+
+#### Or Install Using a cloud NoSQL (Azure's CosmosDB) as a data cache (good for millions of comparisons) 
+
+| library                                | description             | license    | source                                              | coordinates |
+|----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
+| Spark + Azure Cosmos | Connecting DataFrames to CosmosDB | MIT | https://github.com/Azure/azure-cosmosdb-spark | com.azure.cosmos.spark:azure-cosmos-spark_3-2_2-12:4.11.2 |
+| Azure Cosmos Client | Connectivity to CosmosDB | MIT | https://github.com/Azure/azure-cosmosdb-java | com.azure:azure-cosmos:4.39.0 | 
+
+2. Install Azure/Databricks related libraries above using Maven coordinates
+3. Create An Azure NoSQL Container for document storage 
   (Recommended setting index policy on Cosmos)
 ``` json
 {
@@ -30,7 +47,7 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 ### Input 
 
-Given two tables with identifcal oclumns (id:STRING, latitude:DOUBLE, longitude:DOUBLE), perform a geospatial search of all points within the specified radius 
+Given two tables with identifcal columns (id:STRING, latitude:DOUBLE, longitude:DOUBLE), perform a geospatial search of all points within the specified radius 
 
 ### Running the setup configurations
 
@@ -111,14 +128,6 @@ Azure Standard F_16
  - 41 DBUs
  - 11.5M records hour
 
-The following libraries need installed to your cluster via Maven coordinates
-
-| library                                | description             | license    | source                                              | coordinates |
-|----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
-| Geohashes  | Converting Lat/Long to a Geohash      | Apache 2.0       | https://github.com/kungfoo/geohash-java                      |  ch.hsr:geohash:1.4.0 |
-| Spark + Azure Cosmos | Connecting DataFrames to CosmosDB | MIT | https://github.com/Azure/azure-cosmosdb-spark | com.azure.cosmos.spark:azure-cosmos-spark_3-2_2-12:4.11.2 |
-| Azure Cosmos Client | Connectivity to CosmosDB | MIT | https://github.com/Azure/azure-cosmosdb-java | com.azure:azure-cosmos:4.39.0 | 
-
 ### Roadmap 
 
 Given the current limitation is on RUs spent per request (for non-index scans this is very expensive in Azure). 
@@ -131,7 +140,13 @@ Given the current limitation is on RUs spent per request (for non-index scans th
 Please note the code in this project is provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs). They are provided AS-IS and we do not make any guarantees of any kind. Please do not submit a support ticket relating to any issues arising from the use of these projects. The source in this project is provided subject to the Databricks [License](./LICENSE). All included or referenced third party libraries are subject to the licenses set forth below.
 
 Any issues discovered through the use of this project should be filed as GitHub Issues on the Repo. They will be reviewed as time permits, but there are no formal SLAs for support. 
+___
 
+Open Source libraries used in this project 
+
+| library                                | description             | license    | source                                              | coordinates |
+|----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
+| Geohashes  | Converting Lat/Long to a Geohash      | Apache 2.0       | https://github.com/kungfoo/geohash-java                      |  ch.hsr:geohash:1.4.0 |
 ___
 
 &copy; 2022 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the Databricks License [https://databricks.com/db-license-source].  All included or referenced third party libraries are subject to the licenses set forth below.
