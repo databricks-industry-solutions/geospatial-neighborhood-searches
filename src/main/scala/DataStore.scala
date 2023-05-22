@@ -1,14 +1,9 @@
 package com.databricks.industry.solutions.geospatial.searches
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
-
-import org.apache.spark.rdd.RDD 
-import org.apache.spark.sql._
-import org.apache.spark.sql.functions._
-import scala.collection.mutable.ArrayBuffer
-import org.apache.spark.sql.functions.col
-
+import org.apache.spark.rdd.RDD, org.apache.spark.sql._, org.apache.spark.sql.functions._, org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
+import scala.collection.mutable.ArrayBuffer
 
 trait DataStore{
   def search(rdd: RDD[SearchInquery]): RDD[SearchResult]
@@ -28,7 +23,7 @@ trait DataStore{
   }
 
   /*
-   * Create an rdd that allows implementation of a searchable (queryable) dataset
+   * Create an rdd representing a searchable (queryable) dataset
    */
   def toInqueryRDD(df: DataFrame, radius: Integer, maxResults: Integer=10, metric: String = "Miles"): RDD[SearchInquery] = {
     val measurement = metric match {
@@ -44,6 +39,9 @@ trait DataStore{
       })
   }
 
+  /*
+   * Converting search result case class back into a Dataframe
+   */ 
   def fromSearchResultRDD(rdd: RDD[SearchResult])(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     return rdd.toDF

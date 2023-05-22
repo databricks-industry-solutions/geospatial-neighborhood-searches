@@ -43,8 +43,8 @@ class CosmosDS(val config: Map[String, String])(implicit spark: SparkSession) ex
 
   // Configure Catalog Api to be used (this class can be called seperate from the companion object)
   spark.conf.set(s"spark.sql.catalog.cosmosCatalog", "com.azure.cosmos.spark.CosmosCatalog")
-    spark.conf.set(s"spark.sql.catalog.cosmosCatalog.spark.cosmos.accountEndpoint", config("spark.cosmos.accountEndpoint"))
-    spark.conf.set(s"spark.sql.catalog.cosmosCatalog.spark.cosmos.accountKey", config("spark.cosmos.accountKey"))
+  spark.conf.set(s"spark.sql.catalog.cosmosCatalog.spark.cosmos.accountEndpoint", config("spark.cosmos.accountEndpoint"))
+  spark.conf.set(s"spark.sql.catalog.cosmosCatalog.spark.cosmos.accountKey", config("spark.cosmos.accountKey"))
 
   override def recordCount: Long = {
 
@@ -109,21 +109,7 @@ class CosmosDS(val config: Map[String, String])(implicit spark: SparkSession) ex
 
     if(results.size > inquire.maxResults)
       new SearchResult(inquire.rec, topNElements(results, inquire.maxResults).toArray, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
-    new SearchResult(inquire.rec, results.toArray, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
+    else 
+      new SearchResult(inquire.rec, results.toArray, searchSpace, (System.nanoTime - start).toDouble / 1000000000) //convert to seconds
   }
 }
-
-
-/*
- https://learn.microsoft.com/bs-latn-ba/azure/cosmos-db/nosql/quickstart-spark?tabs=scala
-val cosmosEndpoint = "https://REPLACEME.documents.azure.com:443/"
-val cosmosMasterKey = "REPLACEME"
-val cosmosDatabaseName = "sampleDB"
-val cosmosContainerName = "sampleContainer"
-
-val cfg = Map("spark.cosmos.accountEndpoint" -> cosmosEndpoint,
-  "spark.cosmos.accountKey" -> cosmosMasterKey,
-  "spark.cosmos.database" -> cosmosDatabaseName,
-  "spark.cosmos.container" -> cosmosContainerName
- )
- */
