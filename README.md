@@ -20,7 +20,7 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 1. Attach jar from repo as a cluster library
 
-#### Install Using Spark Serverless SQL as a data cache (good for hundreds of thousands of comparisons)
+#### Using Spark Serverless SQL as a data cache (good for hundreds of thousands of comparisons)
 
 | library                                | description             | license    | source                                              | coordinates |
 |----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
@@ -29,7 +29,7 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 2. Install Databricks JDBC related libraries above using Maven coordinates
 
-#### Or Install Using a cloud NoSQL (Azure's CosmosDB) as a data cache (good for millions of comparisons) 
+#### Or Using a cloud NoSQL (Azure's CosmosDB) as a data cache (good for millions of comparisons) 
 
 | library                                | description             | license    | source                                              | coordinates |
 |----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
