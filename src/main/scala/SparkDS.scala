@@ -38,6 +38,7 @@ object SparkServerlessDS {
       }
     ).reduceByKey((a,b) => a++b ).map(x => NoSQLRecord(x._1, x._2.toList)).toDF("key", "value")
     noSqlDF.write.mode("overwrite").saveAsTable(tempTableName)
+    spark.sql("OPTIMIZE " + tempTableName + " ZORDER BY (key) ")
     new SparkServerlessDS(tempTableName, jdbcURL)
   }
 }
@@ -53,9 +54,9 @@ class SparkServerlessDS(val tableName: String, val jdbcURL: String) extends Data
   override def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = {
     rdd.mapPartitions(partition => {
       lazy val con = connect(jdbcURL)
-      val part = partition.map(row => search(row, con))
+      val part = partition.map(row => search(row, con)).toList
       con.close
-      part
+      part.toIterator
     })
   }
 
@@ -72,8 +73,8 @@ class SparkServerlessDS(val tableName: String, val jdbcURL: String) extends Data
     }
 
     val results = it.flatMap(data => {
-      val noSqlRec = io.circe.parser.decode[NoSQLRecord](data).right.get
-      noSqlRec.value.map(rec => {
+      val recList = io.circe.parser.decode[List[GeoRecord]](data).right.get
+      recList.map(rec => {
         val distanceKM = inquire.rec.distanceKM(rec)
         val distanceResult = inquire.ms match {
           case Measurement.Miles | Measurement.Mi => GeoSearch.sizeAsMi(distanceKM, inquire.ms)

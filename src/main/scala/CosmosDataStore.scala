@@ -63,9 +63,9 @@ class CosmosDS(val config: Map[String, String])(implicit spark: SparkSession) ex
     rdd.mapPartitions(partition => {
       lazy val client = getNewClient
       lazy val container = getNewContainer(client)
-      val part = partition.map(row => search(row, container))
-      //client.close
-      part
+      val part = partition.map(row => search(row, container)).toList
+      client.close
+      part.toIterator
     })
   }
 
