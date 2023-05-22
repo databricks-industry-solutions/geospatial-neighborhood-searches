@@ -27,6 +27,8 @@ val coreDependencies = Seq(
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
+  //Spark JDBC
+  "com.databricks" % "databricks-jdbc" % "2.6.25" % "provided",
    //Cosmos 
   "com.azure.cosmos.spark" % "azure-cosmos-spark_3-2_2-12" % "4.11.2" % "provided",
   "com.audienceproject" %% "spark-dynamodb" % "1.1.2" % "provided",
