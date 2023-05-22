@@ -12,7 +12,7 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 Results are calculated by specifying a radius to compare two datasets against each other and return all values within a radius.
 
-[!img](./img/upmc_childrens_hospital.png)
+![image](./img/upmc_childrens_hospital.png?raw=true)
 
 ## Getting started
 
