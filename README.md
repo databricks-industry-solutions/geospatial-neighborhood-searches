@@ -30,11 +30,11 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 #### Spark Serverless SQL as a data cache (good for hundreds of thousands of comparisons)
 
-| library                                | description             | license    | source                                              | coordinates |
+| library                                | description             | license    | source                                              | 
 |----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
-| Databricks JDBC | Connecting to Spark via JDBC | Databricks JDBC Driver License | https://central.sonatype.com/artifact/com.databricks/databricks-jdbc/ | com.databricks:databricks-jdbc:2.6.33|
+| Databricks JDBC | Connecting to Spark via JDBC | Databricks JDBC Driver License | https://www.databricks.com/spark/jdbc-drivers-download | 
 
-2. Install Databricks JDBC library above using Maven coordinates
+2. Download the driver from the link above and attach to your cluster
 
 #### Or Azure's CosmosDB as a data cache (good for millions of comparisons) 
 
