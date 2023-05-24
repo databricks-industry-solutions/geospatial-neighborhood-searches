@@ -36,7 +36,7 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 2. Install Databricks JDBC library above using Maven coordinates
 
-#### CosmosDB as a data cache (good for millions of comparisons) 
+#### Or Azure's CosmosDB as a data cache (good for millions of comparisons) 
 
 | library                                | description             | license    | source                                              | coordinates |
 |----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
