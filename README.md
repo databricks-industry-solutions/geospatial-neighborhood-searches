@@ -24,16 +24,16 @@ Results are calculated by specifying a radius to compare two datasets against ea
 
 1. Attach jar from repo as a cluster library
 
-#### Using Spark Serverless SQL as a data cache (good for hundreds of thousands of comparisons)
+#### Spark Serverless SQL as a data cache (good for hundreds of thousands of comparisons)
 
 | library                                | description             | license    | source                                              | coordinates |
 |----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
 | Databricks JDBC | Connecting to Spark via JDBC | Databricks JDBC Driver License | https://central.sonatype.com/artifact/com.databricks/databricks-jdbc/ | com.databricks:databricks-jdbc:2.6.25|
 
 
-2. Install Databricks JDBC related libraries above using Maven coordinates
+2. The jar you have attached includes the package above to connect to Serverless. Nothing further needed
 
-#### Or Using a cloud NoSQL (Azure's CosmosDB) as a data cache (good for millions of comparisons) 
+#### CosmosDB as a data cache (good for millions of comparisons) 
 
 | library                                | description             | license    | source                                              | coordinates |
 |----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
