@@ -49,7 +49,17 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
   (Recommended setting index policy on Cosmos)
 ``` json
 {
-    "indexingMode": "none"
+    "indexingMode": "consistent",
+    "automatic": true,
+    "includedPaths": [],
+    "excludedPaths": [
+        {
+            "path": "/*"
+        },
+        {
+            "path": "/\"_etag\"/?"
+        }
+    ]
 }
 ```
 
