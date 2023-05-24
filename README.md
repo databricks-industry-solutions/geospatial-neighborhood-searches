@@ -29,8 +29,8 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 1. Attach jar from repo as a cluster library
 
 #### Spark Serverless SQL as a data cache (good for hundreds of thousands of comparisons)
-
-2. FYI, the jar attached from step 1 includes the Spark JDBC jar. No action needed
+ 
+2. Download and attach the [Spark JDBC Driver](https://ohdsi.github.io/DatabaseConnectorJars/) as a cluster library
 
 #### Or Azure's CosmosDB as a data cache (good for millions of comparisons) 
 
