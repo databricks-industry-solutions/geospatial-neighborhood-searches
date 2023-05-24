@@ -13,7 +13,7 @@ import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructTy
  *  Datasets must be accessible to serverless cluster
  *
  */
-object SparkServerlessDS  {
+object SparkServerlessDS {
   def fromDF(df: DataFrame, jdbcURL: String, tempTableName: String)(implicit spark: SparkSession): DataStore = {
     import spark.implicits._
     val noSqlDF = df.select(col("id").cast(StringType), col("latitude").cast(DoubleType), col("longitude").cast(DoubleType)).rdd.map(row =>
