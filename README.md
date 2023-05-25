@@ -29,9 +29,7 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 Given two tables with identifcal columns (id:STRING, latitude:DOUBLE, longitude:DOUBLE), perform a geospatial search of all points within the specified radius 
 
-### Output 
-
-Data Dictionary
+### Output Data Dictionary
 
 |Column|Description|
 |---|---|
@@ -53,7 +51,8 @@ import com.databricks.industry.solutions.geospatial.searches._
 implicit val spark2 = spark 
 
 //Configurations
-val jdbcUrl = "jdbc:spark://eastus2.azuredatabricks.net:443/default;transportMode=http;ssl=1;httpPath=sql/protocolv1/o/5206439413157315/0812-164905-tear862;AuthMech=3;UID=token;PWD=dapi4182704e78d53a0a7890520ea277dffd" 
+//For generating your auth token in your JDBC URL connection, see https://docs.databricks.com/dev-tools/auth.html#pat
+val jdbcUrl = "jdbc:spark://eastus2.azuredatabricks.net:443/default;transportMode=http;ssl=1;httpPath=sql/protocolv1/o/5206439413157315/0812-164905-tear862;AuthMech=3;UID=token;PWD=XXXX" 
 val tempTable = "geospatial_searches.va_facilities_temp" 
 
 //Search input Params
