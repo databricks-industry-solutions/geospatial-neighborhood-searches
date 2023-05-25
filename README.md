@@ -33,8 +33,8 @@ Given two tables with identifcal columns (id:STRING, latitude:DOUBLE, longitude:
 
 Data Dictionary
 
-|---|---|
 |Column|Description|
+|---|---|
 |origin.id|Origin table's ID column|
 |origin.latitude|Origin table's latitude coordinate|
 |origin.longitude|Origin table's longitude coordinate|
