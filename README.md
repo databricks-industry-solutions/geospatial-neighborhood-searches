@@ -61,7 +61,7 @@ implicit val spark2 = spark
 
 //Configuration for Serverless Connection
 //For generating your auth token in your JDBC URL connection, see https://docs.databricks.com/dev-tools/auth.html#pat
-val jdbcUrl = "jdbc:spark://eastus2.azuredatabricks.net:443/default;transportMode=http;ssl=1;httpPath=sql/protocolv1/o/5206439413157315/0812-164905-tear862;AuthMech=3;UID=token;PWD=XXXX" 
+val jdbcUrl = "jdbc:spark://eastus2.azuredatabricks.net:443/default...UID=token;PWD=XXXX" 
 val tempWorkTable = "geospatial_searches.sample_temp" 
 
 //Input Search Params
