@@ -83,7 +83,7 @@ object GeoSearch{
   }
 
   /*
-   * Given a length and measurement, return KM
+   * Given a length and measurement, return KM.
    */
   def sizeAsKM(size: Double ,ms: Measurement.Value = Measurement.Mi): Double = {
     ms match {
@@ -164,7 +164,7 @@ object GeoSearch{
 
   /*
    * Return distance in KM between two points using law of cosines
-   *  Law of Cosines Distance 
+   *  Law of Cosines Distance
    */
   def distance(pointA: WGS84Point, pointB: WGS84Point): Double = {
     val theta = pointA.getLongitude - pointB.getLongitude
