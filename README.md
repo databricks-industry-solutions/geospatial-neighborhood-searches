@@ -81,8 +81,10 @@ val outputDF = ds.fromSearchResultRDD(resultRDD)
 //Saving the results
 outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results")
 ```
-
-
+### SQL Distance UDFs included
+```
+TODO
+```
 ## Project support 
 
 Please note the code in this project is provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs). They are provided AS-IS and we do not make any guarantees of any kind. Please do not submit a support ticket relating to any issues arising from the use of these projects. The source in this project is provided subject to the Databricks [License](./LICENSE). All included or referenced third party libraries are subject to the licenses set forth below.
