@@ -25,7 +25,7 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 1. Attach jar from repo as a cluster library
 2. Download and attach the [Spark JDBC Driver](https://ohdsi.github.io/DatabaseConnectorJars/) as a cluster library
 
-### Input 
+### Input Data Dictionary
 
 Two tables are required with columns specified below. One is considered to have origin points and the other is neighborhoods to be found around points of origin (note these 2 datasets can refer to the same table). Duplicate locations with different IDs in the table are also acceptable. 
 
