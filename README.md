@@ -20,10 +20,6 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 ## Getting started
 
-### Internal ONLY!!! Notebook & Getting Started
-
-[Geospatial Searches in Azure Demo](https://eastus2.azuredatabricks.net/?o=5206439413157315#notebook/1011273009121479/command/4188342588155548)
-
 ### Installation for using Spark Serverless as a data cache
 
 1. Attach jar from repo as a cluster library
@@ -33,7 +29,23 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 Given two tables with identifcal columns (id:STRING, latitude:DOUBLE, longitude:DOUBLE), perform a geospatial search of all points within the specified radius 
 
+### Output 
 
+Data Dictionary
+
+|---|---|
+|Column|Description|
+|origin.id|Origin table's ID column|
+|origin.latitude|Origin table's latitude coordinate|
+|origin.longitude|Origin table's longitude coordinate|
+|neighbors|Array of matching results. Pivot to rows using explode() function|
+|neighbors.value.id|Surrounding neighbor's ID column|
+|neighbors.value.latitude|Surrounding neighbor's latitude coordinate|
+|neighbors.value.longitude|Surrounding neighbor's longitude coordinate|
+|neighbors.euclideanDistance|Distance between origin point and neighbor. The Unit is either Km or Mi matching the input specified|
+|neighbors.ms|The unit of measurement for euclideanDistance (miles or kilometers)|
+|searchSpace|The geohash searched. Larger string lengths === smaller search spaces (faster) and vice versa holds true|
+|searchTimerSeconds|The number of seconds it took to find all neighbors for the origin point|
 
 ### Running the search algorithm
 ``` scala
