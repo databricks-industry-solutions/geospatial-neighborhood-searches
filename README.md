@@ -44,7 +44,7 @@ Two tables are required with columns specified below. One is considered to have 
 |origin.id|Origin table's ID column|
 |origin.latitude|Origin table's latitude coordinate|
 |origin.longitude|Origin table's longitude coordinate|
-|searchSpace|The geohash searched. Larger string lengths === smaller search spaces (faster) and vice versa holds true|
+|searchSpace|The geohash searched. Larger string lengths equates to small search spaces (faster) and vice versa holds true|
 |searchTimerSeconds|The number of seconds it took to find all neighbors for the origin point|
 |neighbors|Array of matching results. Pivot to rows using explode() function|
 | neighbors.value.id|Surrounding neighbor's ID column|
