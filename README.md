@@ -35,8 +35,7 @@ Two tables are required with columns specified below. One is considered to have 
 |longitude|the longitude value of the location|Double|
 identifcal columns (id:STRING, latitude:DOUBLE, longitude:DOUBLE), perform a geospatial search of all points within the specified radius 
 
- **Warning**
-It is best practice to filter out invalid lat/long values. This can cause cartesian products and greatly increase runtimes.
+> :warning: It is best practice to filter out invalid lat/long values. This can cause cartesian products and greatly increase runtimes.
 
 ### Output Data Dictionary
 
