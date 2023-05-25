@@ -36,14 +36,15 @@ Given two tables with identifcal columns (id:STRING, latitude:DOUBLE, longitude:
 |origin.id|Origin table's ID column|
 |origin.latitude|Origin table's latitude coordinate|
 |origin.longitude|Origin table's longitude coordinate|
-|neighbors|Array of matching results. Pivot to rows using explode() function|
-|neighbors.value.id|Surrounding neighbor's ID column|
-|neighbors.value.latitude|Surrounding neighbor's latitude coordinate|
-|neighbors.value.longitude|Surrounding neighbor's longitude coordinate|
-|neighbors.euclideanDistance|Distance between origin point and neighbor. The Unit is either Km or Mi matching the input specified|
-|neighbors.ms|The unit of measurement for euclideanDistance (miles or kilometers)|
 |searchSpace|The geohash searched. Larger string lengths === smaller search spaces (faster) and vice versa holds true|
 |searchTimerSeconds|The number of seconds it took to find all neighbors for the origin point|
+|neighbors|Array of matching results. Pivot to rows using explode() function|
+| neighbors.value.id|Surrounding neighbor's ID column|
+| neighbors.value.latitude|Surrounding neighbor's latitude coordinate|
+| neighbors.value.longitude|Surrounding neighbor's longitude coordinate|
+| neighbors.euclideanDistance|Distance between origin point and neighbor. The Unit is either Km or Mi matching the input specified|
+| neighbors.ms|The unit of measurement for euclideanDistance (miles or kilometers)|
+
 
 ### Running the search algorithm
 ``` scala
