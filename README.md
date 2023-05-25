@@ -27,7 +27,16 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 ### Input 
 
-Given two tables with identifcal columns (id:STRING, latitude:DOUBLE, longitude:DOUBLE), perform a geospatial search of all points within the specified radius 
+Two tables are required with columns specified below. One is considered to have origin points and the other is neighborhoods to be found around points of origin (note these 2 datasets can refer to the same table). Duplicate locations with different IDs in the table are also acceptable. 
+
+|Column|Description|Expected Type|
+|id|A unique identifier to be used to re-identify records and relate back to other datasets|String|
+|latitude|the latitude value of the location|Double|
+|longitude|the longitude value of the location|Double|
+identifcal columns (id:STRING, latitude:DOUBLE, longitude:DOUBLE), perform a geospatial search of all points within the specified radius 
+
+ **Warning**
+It is best practice to filter out invalid lat/long values. This can cause cartesian products and greatly increase runtimes.
 
 ### Output Data Dictionary
 
