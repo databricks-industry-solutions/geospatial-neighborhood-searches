@@ -22,7 +22,7 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 ### Installation for using Spark Serverless as a data cache
 
-1. Attach jar from repo as a cluster library
+1. Attach jar from repo as a cluster library to a cluster running **Spark 3.3.1, Scala 2.12**
 2. Download and attach the [Spark JDBC Driver](https://ohdsi.github.io/DatabaseConnectorJars/) as a cluster library
 
 ### Input Data Dictionary
