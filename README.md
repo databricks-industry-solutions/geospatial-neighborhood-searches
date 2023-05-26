@@ -81,6 +81,10 @@ val outputDF = ds.fromSearchResultRDD(resultRDD)
 //Saving the results
 outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results")
 ```
+### Driving Distance, Driving Times, and Driving Directions with OSRM
+
+Knowing which points are nearby is helpful. Given a proximity of a series of points this use case can be extended to include personalized driving information using [OSRM on Databricks](https://www.databricks.com/blog/2022/09/02/solution-accelerator-scalable-route-generation-databricks-and-osrm.html)
+
 ### SQL Distance UDFs included
 ```
 TODO
