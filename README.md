@@ -114,7 +114,7 @@ SELECT distance....
 
 Databricks's [Mosiac](https://github.com/databrickslabs/mosaic) offers a rich feature set of analytical functions used for Geospatial analysis. 
 
-### Going Further: Driving Distance, Times, and Directions with OSRM
+## Going Further: Driving Distance, Times, and Directions with OSRM
 
 Knowing which points are nearby is helpful. Given a proximity of a series of points this use case can be extended to include personalized driving information using [OSRM on Databricks](https://www.databricks.com/blog/2022/09/02/solution-accelerator-scalable-route-generation-databricks-and-osrm.html)
 
