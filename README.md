@@ -104,7 +104,7 @@ from pyspark.sql.types import *
 spark.udf.registerJavaFunction("distanceMi", "com.databricks.industry.solutions.geospatial.searches.DistanceInMi", DoubleType())
 
 %sql
-SELECT distanceMi("42.5787980", "-71.5728", "42.461886", "-71.5485457") -- 8.1717
+SELECT distanceMi("42.5787980", "-71.5728", "42.461886", "-71.5485457") -- 8.1717 (miles)
 ```
 
 ## Going Further: More advanced Geospatial Analytics 
