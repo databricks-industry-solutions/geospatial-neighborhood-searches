@@ -87,9 +87,9 @@ Search performance varries depending on several factors: size of origin and neig
 
 |Neibhorhood table size|Avg Search Time Per Record|Origin Table Throughput: 100 partitions|Origin Table Throughput: 440 partitions|Origin Table Throughput: 3000 partitions|
 |--|--|--|--|--|
-|10K+|0.2s|30K / Minute|132K / Minute|900K / Minute|
-|100K+|0.5s|12K / Minute|52K / Minute|360K / Minute|
-|1M+|1.2s|5K / Minute|21K / Minute|144K / Minute|
+|10K+|0.2s|30K per minute|132K per minute|900K per minute|
+|100K+|0.5s|12K per minute|52K per minute|360K per minute|
+|1M+|1.2s|5K per minute|21K per minute|144K per minute|
 
 ### SQL Distance UDFs included
 ```
