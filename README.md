@@ -96,12 +96,14 @@ Search performance varries depending on several factors: size of origin and neig
 DistanceInKm() and DistanceInMi() functions
 **Input order:** lat1, long1, lat2, long2
 
+#### Python
 ```python
 from pyspark.sql.types import *
 spark.udf.registerJavaFunction("distance", "com.databricks.industry.solutions.geospatial.searches.DistanceInMi", DoubleType())
 spark.sql("""select distance(,,,)""").show()
 ```
 
+#### SQL
 ```sql
 CREATE TEMPORARY FUNCTION distance AS 'DistanceInMi' USING JAR '/path/to/this/jar/geospatial-searches-0.0.1_assembly.jar'
 SELECT distance.... 
