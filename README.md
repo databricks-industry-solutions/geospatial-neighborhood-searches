@@ -82,6 +82,16 @@ outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results
 | neighbors.euclideanDistance|Distance between origin point and neighbor. The Unit is either Km or Mi matching the input specified|
 | neighbors.ms|The unit of measurement for euclideanDistance (miles or kilometers)|
 
+### Search Performance
+```
+TODO 
+```
+
+### SQL Distance UDFs included
+```
+TODO
+```
+
 ## Going Further: More advanced Geospatial Analytics 
 
 Databricks's [Mosiac](https://github.com/databrickslabs/mosaic) offers a rich feature set of analytical functions used for Geospatial analysis. 
@@ -89,11 +99,6 @@ Databricks's [Mosiac](https://github.com/databrickslabs/mosaic) offers a rich fe
 ### Going Further: Driving Distance, Times, and Directions with OSRM
 
 Knowing which points are nearby is helpful. Given a proximity of a series of points this use case can be extended to include personalized driving information using [OSRM on Databricks](https://www.databricks.com/blog/2022/09/02/solution-accelerator-scalable-route-generation-databricks-and-osrm.html)
-
-### SQL Distance UDFs included
-```
-TODO
-```
 
 ## Project support 
 
