@@ -4,7 +4,7 @@
 
 ## Problem Statement
 
-Determining nearby locations to a point on a map becomes difficult as datasets grow larger. For "small" datasets a direct comparison of distance can be used but does not scale as your data grows. To scale, a technique called [geohashing](https://en.wikipedia.org/wiki/Geohash) is used but is not accurate due to how points get compared within an area. 
+Determining nearby locations to a point on a map becomes difficult as datasets grow larger. For "small" datasets a direct comparison of distance can be used but does not scale as your data grows. To scale, a technique called [geohashing](https://en.wikipedia.org/wiki/Geohash) is used but is not accurate due to how points are compared. 
 
 ## An Accurate Scalable Solution
 
@@ -93,7 +93,7 @@ Search performance varries depending on several factors: size of origin and neig
 
 ### SQL Distance UDFs included
 
-DistanceInKm() and DistanceInMi() functions
+DistanceInKm() and DistanceInMi() functions. 
 **Input order:** lat1, long1, lat2, long2
 
 #### Python
