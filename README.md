@@ -38,7 +38,7 @@ Two tables are required with columns specified below. One is considered to have 
 > :warning: It is best practice to filter out invalid lat/long values. This can cause cartesian products and greatly increase runtimes.
 
 
-### Running the search algorithm
+### Running the search
 ``` scala
 import com.databricks.industry.solutions.geospatial.searches._ 
 implicit val spark2 = spark 
