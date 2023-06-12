@@ -37,6 +37,35 @@ Two tables are required with columns specified below. One is considered to have 
 
 > :warning: It is best practice to filter out invalid lat/long values. This can cause cartesian products and greatly increase runtimes.
 
+
+### Running the search algorithm
+``` scala
+import com.databricks.industry.solutions.geospatial.searches._ 
+implicit val spark2 = spark 
+
+//Configuration Spark Serverless Connection
+//For generating your auth token in your JDBC URL connection, see https://docs.databricks.com/dev-tools/auth.html#pat
+val jdbcUrl = "jdbc:spark://eastus2.azuredatabricks.net:443/default...UID=token;PWD=XXXX" 
+val tempWorkTable = "geospatial_searches.sample_temp" 
+
+//Search Input Paramaters
+val originTable="geospatial_searches.origin_locations"  
+val neighborTable="geospatial_searches.neighbor_locations" 
+val radius=5 
+val measurementType="miles"
+val maxResults = 100
+val degreeOfDataParallelism = 48 //This value should match the # of CPUs your cluster has. Increase for more parallelism (faster)
+
+//Running the algorithm
+val ds = SparkServerlessDS.fromDF(spark.table(neighborTable), jdbcUrl, tempWorkTable)
+val searchRDD = ds.toInqueryRDD(spark.table(originTable), radius, maxResults, measurementType).repartition(degreeOfDataParallelism)
+val resultRDD = ds.asInstanceOf[SparkServerlessDS].search(searchRDD)
+val outputDF = ds.fromSearchResultRDD(resultRDD)
+
+//Saving the results
+outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results")
+```
+
 ### Output Data Dictionary
 
 |Column|Description|
@@ -53,35 +82,11 @@ Two tables are required with columns specified below. One is considered to have 
 | neighbors.euclideanDistance|Distance between origin point and neighbor. The Unit is either Km or Mi matching the input specified|
 | neighbors.ms|The unit of measurement for euclideanDistance (miles or kilometers)|
 
+## Going Further: More advanced Geospatial Analytics 
 
-### Running the search algorithm
-``` scala
-import com.databricks.industry.solutions.geospatial.searches._ 
-implicit val spark2 = spark 
+Databricks's [Mosiac](https://github.com/databrickslabs/mosaic) offers a rich feature set of analytical functions used for Geospatial analysis. 
 
-//Configuration for Serverless Connection
-//For generating your auth token in your JDBC URL connection, see https://docs.databricks.com/dev-tools/auth.html#pat
-val jdbcUrl = "jdbc:spark://eastus2.azuredatabricks.net:443/default...UID=token;PWD=XXXX" 
-val tempWorkTable = "geospatial_searches.sample_temp" 
-
-//Input Search Params
-val originTable="geospatial_searches.origin_locations" 
-val neighborTable="geospatial_searches.neighbor_locations" 
-val radius=5
-val maxResults = 100
-val measurementType="miles"
-val degreeOfDataParallelism = 48 //This value should match the # of CPUs your cluster has. Increase for larger parallelism (faster)
-
-//Running the algorithm
-val ds = SparkServerlessDS.fromDF(spark.table(neighborTable), jdbcUrl, tempWorkTable)
-val searchRDD = ds.toInqueryRDD(spark.table(originTable), radius, maxResults, measurementType).repartition(degreeOfDataParallelism)
-val resultRDD = ds.asInstanceOf[SparkServerlessDS].search(searchRDD)
-val outputDF = ds.fromSearchResultRDD(resultRDD)
-
-//Saving the results
-outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results")
-```
-### Driving Distance, Driving Times, and Driving Directions with OSRM
+### Going Further: Driving Distance, Times, and Directions with OSRM
 
 Knowing which points are nearby is helpful. Given a proximity of a series of points this use case can be extended to include personalized driving information using [OSRM on Databricks](https://www.databricks.com/blog/2022/09/02/solution-accelerator-scalable-route-generation-databricks-and-osrm.html)
 
@@ -89,6 +94,7 @@ Knowing which points are nearby is helpful. Given a proximity of a series of poi
 ```
 TODO
 ```
+
 ## Project support 
 
 Please note the code in this project is provided for your exploration only, and are not formally supported by Databricks with Service Level Agreements (SLAs). They are provided AS-IS and we do not make any guarantees of any kind. Please do not submit a support ticket relating to any issues arising from the use of these projects. The source in this project is provided subject to the Databricks [License](./LICENSE). All included or referenced third party libraries are subject to the licenses set forth below.
