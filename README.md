@@ -93,7 +93,8 @@ Search performance varries depending on several factors: size of origin and neig
 
 ### SQL Distance UDFs included
 
-DistanceInKm() and DistanceInMi() functions. 
+DistanceInKm() and DistanceInMi() functions.   
+
 **Input order:** lat1, long1, lat2, long2
 
 #### Python
