@@ -92,8 +92,19 @@ Search performance varries depending on several factors: size of origin and neig
 |1M+|1.2s|5K per minute|21K per minute|144K per minute|
 
 ### SQL Distance UDFs included
+
+DistanceInKm() and DistanceInMi() functions
+**Input order:** lat1, long1, lat2, long2
+
+```python
+from pyspark.sql.types import *
+spark.udf.registerJavaFunction("distance", "com.databricks.industry.solutions.geospatial.searches.DistanceInMi", DoubleType())
+spark.sql("""select distance(,,,)""").show()
 ```
-TODO
+
+```sql
+CREATE TEMPORARY FUNCTION distance AS 'DistanceInMi' USING JAR '/path/to/this/jar/geospatial-searches-0.0.1_assembly.jar'
+SELECT distance.... 
 ```
 
 ## Going Further: More advanced Geospatial Analytics 
