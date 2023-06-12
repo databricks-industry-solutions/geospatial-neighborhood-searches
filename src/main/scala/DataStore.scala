@@ -5,6 +5,7 @@ import org.apache.spark.rdd.RDD, org.apache.spark.sql._, org.apache.spark.sql.fu
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import scala.collection.mutable.ArrayBuffer
 
+
 trait DataStore{
   def search(rdd: RDD[SearchInquery]): RDD[SearchResult]
   def recordCount: Long

@@ -10,7 +10,7 @@ import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructTy
 
 /*
  * Backend datastore of a Spark Serverless SQL warehouse
- *  Datasets must be accessible to serverless cluster
+ *  Datasets must be accessible to serverless cluster.
  *
  */
 object SparkServerlessDS {
@@ -25,6 +25,23 @@ object SparkServerlessDS {
     noSqlDF.write.mode("overwrite").saveAsTable(tempTableName)
     spark.sql("OPTIMIZE " + tempTableName + " ZORDER BY (key) ")
     new SparkServerlessDS(tempTableName, jdbcURL)
+  }
+
+  /*
+   * Input all params to run end to end
+   *  Returns a DF of the resulting comparisons
+   */
+  def searchMiles(originTablename: String,
+    neighborTablename: String,
+    tempWorkingTablename: String,
+    radius: Integer,
+    maxResults: Integer,
+    jdbcUrl: String)(implicit spark: SparkSession): DataFrame = {
+    val ds = fromDF(spark.table(neighborTablename), jdbcUrl, tempWorkingTablename)
+    val searchRDD = ds.toInqueryRDD(spark.table(originTablename), radius, maxResults, "miles")
+    val resultsRDD = ds.asInstanceOf[SparkServerlessDS].search(searchRDD)
+    spark.sql("DROP TABLE IF EXISTS " + tempWorkingTablename)
+    return ds.fromSearchResultRDD(resultsRDD)
   }
 }
 
