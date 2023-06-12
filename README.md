@@ -20,10 +20,6 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 ## Getting started
 
-### Internal ONLY!!! Notebook & Getting Started
-
-[Geospatial Searches in Azure Demo](https://eastus2.azuredatabricks.net/?o=5206439413157315#notebook/1011273009121479/command/4188342588155548)
-
 ### Installation 
 
 1. Attach jar from repo as a cluster library
