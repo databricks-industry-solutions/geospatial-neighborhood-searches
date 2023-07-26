@@ -43,14 +43,14 @@ object SparkServerlessDS {
     spark.sql("DROP TABLE IF EXISTS " + tempWorkingTablename)
     return ds.fromSearchResultRDD(resultsRDD)
   }
-}
-
-class SparkServerlessDS(val tableName: String, val jdbcURL: String) extends DataStore with java.io.Serializable{
 
   def connect(jdbcURL: String): Connection = {
     Class.forName("com.simba.spark.jdbc.Driver")
     DriverManager.getConnection(jdbcURL)
   }
+}
+
+class SparkServerlessDS(val tableName: String, val jdbcURL: String) extends DataStore with java.io.Serializable{
 
   override def recordCount: Long = ???
   override def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = {
