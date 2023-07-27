@@ -55,7 +55,7 @@ class SparkServerlessDS(val tableName: String, val jdbcURL: String) extends Data
   override def recordCount: Long = ???
   override def search(rdd: RDD[SearchInquery]): RDD[SearchResult] = {
     rdd.mapPartitions(partition => {
-      lazy val con = connect(jdbcURL)
+      lazy val con = SparkServerlessDS.connect(jdbcURL)
       val part = partition.map(row => {
         search(row,
           con,
