@@ -4,11 +4,6 @@
 
 // COMMAND ----------
 
-// MAGIC %md 
-// MAGIC ## SABA - Anyway to make authToken a secret here? 
-
-// COMMAND ----------
-
 dbutils.widgets.text("Radius", "25")
 dbutils.widgets.text("maxResults", "100")
 dbutils.widgets.text("measurementType", "miles")
@@ -20,7 +15,7 @@ val tempTable = "geospatial_searches.provider_facilities_temp"
 
 // COMMAND ----------
 
-// DBTITLE 1,Ensure params are populated
+// DBTITLE 1,Ensure params are populated correctly
 val jdbcUrl = dbutils.widgets.get("ServerlessUrl") + ";PWD=" + dbutils.widgets.get("authToken") 
 
 require(dbutils.widgets.get("authToken") != "<personal-access-token>", 
@@ -30,7 +25,7 @@ require(dbutils.widgets.get("ServerlessUrl") != "jdbc:spark//", "Databricks Serv
 
 // COMMAND ----------
 
-// DBTITLE 1,Test Serverless Connectivity
+// DBTITLE 1,Test Spark Serverless Connectivity
 import com.databricks.industry.solutions.geospatial.searches._
 val con = SparkServerlessDS.connect(jdbcUrl)
 require(con.isClosed() == false, "Failed to connect to endpoint jdbcUrl: " + jdbcUrl)
@@ -46,7 +41,7 @@ val measurementType="miles"
 // COMMAND ----------
 
 // MAGIC %md
-// MAGIC # Load Synthetic Datasets
+// MAGIC # Create Input Datasets
 
 // COMMAND ----------
 
@@ -124,7 +119,7 @@ df.show()
 
 // COMMAND ----------
 
-// MAGIC %md # Spark ServerlessSQL 
+// MAGIC %md # Run Search Algorithm 
 
 // COMMAND ----------
 
@@ -136,155 +131,67 @@ val ds = SparkServerlessDS.fromDF(spark.table("provider_facilities"), jdbcUrl, t
 
 // COMMAND ----------
 
-// MAGIC %md # SABA TODO cluster CPU size should = number of repartitions
+// MAGIC %md ## Setting search parallelism 
+// MAGIC
+// MAGIC This is based upon CPUs available to your cluster (faster runtimes with higher parallelism)
 
 // COMMAND ----------
 
-val searchRDD = ds.toInqueryRDD(spark.sql(""" select * from geospatial_searches.member_locations"""), radius, maxResults, measurementType).repartition(48)
+/*
+* Set numParallel value to the number of CPUs in your attached spark cluster
+*/
+val numParallel = 96 //recommended for the sample dataset
+
+val searchRDD = ds.toInqueryRDD(spark.sql(""" select * from geospatial_searches.member_locations"""), radius, maxResults, measurementType).repartition(numParllel)
 val resultRDD = ds.search(searchRDD)
 ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatial_searches.search_results_serverless")
 
 // COMMAND ----------
 
-// MAGIC %md #TODO Saba maybe some metrics on performance here? 
+// MAGIC %md ## Viewing the Results
 
 // COMMAND ----------
 
+// MAGIC %sql
+// MAGIC
+// MAGIC SELECT * FROM  geospatial_searches.search_results_serverless limit 10;
+
+// COMMAND ----------
+
+// MAGIC %md # Performance Tuning
+
+// COMMAND ----------
+
+// DBTITLE 1,Average Search Time per Record
 // MAGIC %sql
 // MAGIC
 // MAGIC select avg(searchTimerSeconds) 
-// MAGIC from  geospatial_searches.va_facility_results_sparkserverless
-// MAGIC
-// MAGIC --In summary, scales linearly as executors and number of records are increased... 
-// MAGIC
-// MAGIC --2K records
-// MAGIC   --without Z-order by 
-// MAGIC     --0.19 seconds per request 
-// MAGIC     --0.178125576  Median
-// MAGIC   --With Z-order by 
-// MAGIC     --0.15 seconds per request
-// MAGIC     --0.14 Median
-// MAGIC --379K records
-// MAGIC   --without Z-order by 
-// MAGIC     --0.58 avg
-// MAGIC     --0.29 median
-// MAGIC   --with Z-order by 
-// MAGIC     --0.56
-// MAGIC     --0.28
+// MAGIC from  geospatial_searches.search_results_serverless
 
 // COMMAND ----------
 
-// MAGIC %sql
-// MAGIC select substring(origin.id, 1, 5) as id, round(origin.latitude, 3) as latitude, round(origin.longitude, 3) as longitude,
-// MAGIC   neighbors, searchSpace, searchTimerSeconds
-// MAGIC from  geospatial_searches.va_facility_results_sparkserverless limit 10
-
-// COMMAND ----------
-
-import com.databricks.industry.solutions.geospatial.searches._ 
-
-// COMMAND ----------
-
-// MAGIC %sql
-// MAGIC CREATE TEMPORARY FUNCTION distance AS 'com.databricks.industry.solutions.geospatial.searches.DistanceInMi';
-
-// COMMAND ----------
-
-// MAGIC %python 
-// MAGIC from pyspark.sql.types import *
-// MAGIC spark.udf.registerJavaFunction("distanceMi", "com.databricks.industry.solutions.geospatial.searches.DistanceInMi", DoubleType())
-
-// COMMAND ----------
-
-// MAGIC %sql
-// MAGIC SELECT distanceMi("42.5787980", "-71.5728", "42.461886", "-71.5485457")
-
-// COMMAND ----------
-
-// MAGIC %sql 
-// MAGIC Optimize geospatial_searches.va_facilities_temp zorder by (key)
-
-// COMMAND ----------
-
-//Median value
+// DBTITLE 1,Median Search Time 
 spark.table("geospatial_searches.va_facility_results_sparkserverless").select("searchTimerSeconds")
         .stat
         .approxQuantile("searchTimerSeconds", Array(0.50), 0.001) //median
         .head
-//0.178125576
 
 // COMMAND ----------
 
-// MAGIC %md # TODO Saba maybe showing some example record comparisons here? 
+// DBTITLE 1,75th Percentile
+spark.table("geospatial_searches.va_facility_results_sparkserverless").select("searchTimerSeconds")
+        .stat
+        .approxQuantile("searchTimerSeconds", Array(0.75), 0.001) //median
+        .head
+
+// COMMAND ----------
+
+// MAGIC %sql 
+// MAGIC --Demonstrating opportunity for performance enhancement https://github.com/databricks-industry-solutions/geospatial-neighborhood-searches/issues/10
 // MAGIC
-
-// COMMAND ----------
-
-import com.databricks.industry.solutions.geospatial.searches._ 
-implicit val spark2 = spark 
-//Search input Params
-val radius=25
-val maxResults = 100
-val measurementType="miles"
-
-val jdbcUrl = "jdbc:spark://eastus2.azuredatabricks.net:443/default;transportMode=http;ssl=1;httpPath=sql/protocolv1/o/5206439413157315/0812-164905-tear862;AuthMech=3;UID=token;PWD=dapi4182704e78d53a0a7890520ea277dffd" 
-val tempTable = "geospatial_searches.va_facilities_temp" 
-
-// COMMAND ----------
-
-val con = ds.asInstanceOf[SparkServerlessDS].connect(jdbcUrl)
-
-// COMMAND ----------
-
-import java.sql.DriverManager
-Class.forName("com.simba.spark.jdbc.Driver")
-val jdbcUrl = "jdbc:spark://eastus2.azuredatabricks.net:443/default;transportMode=http;ssl=1;httpPath=sql/protocolv1/o/5206439413157315/0812-164905-tear862;AuthMech=3;UID=token;PWD=dapi4182704e78d53a0a7890520ea277dffd" 
-val con = DriverManager.getConnection(jdbcUrl)
-
-// COMMAND ----------
-
-val tableName = tempTable
-val g = new GeoRecord("ADZ", 34.9326, -117.90)
-val inquire = new SearchInquery(g, radius)
-val searchDistanceKM = GeoSearch.sizeAsKM(inquire.radius.toDouble, inquire.ms)
-val searchSpace = GeoSearch.getSearchSpaceGeohash(inquire.rec.latitude, inquire.rec.longitude, inquire.radius, inquire.ms)
-val query = "SELECT * FROM " + tableName + "  where key like '" + searchSpace + "%'"
-
-// COMMAND ----------
-
-//val start = System.nanoTime()
-val statement = con.createStatement
-val resultSet = statement.executeQuery(query)
-val it = new Iterator[String] {
-      def hasNext = resultSet.next()
-      def next() = resultSet.getString("value")
-    }
-
-// COMMAND ----------
-
-val results = it.flatMap(data => {
-      val recList = io.circe.parser.decode[List[GeoRecord]](data).right.get
-      recList.map(rec => {
-        val distanceKM = inquire.rec.distanceKM(rec)
-        val distanceResult = inquire.ms match {
-          case Measurement.Miles | Measurement.Mi => GeoSearch.sizeAsMi(distanceKM, inquire.ms)
-          case _ => distanceKM
-        }
-        if ( distanceKM > searchDistanceKM )
-          None
-        else
-          Some(new SearchResultValue(rec,distanceResult,inquire.ms))
-      })
-    }).filter(row => row.nonEmpty).map(row => row.get).toList
-
-// COMMAND ----------
-
-results.size
-
-// COMMAND ----------
-
-val recs = io.circe.parser.decode[List[GeoRecord]](res5)
-
-// COMMAND ----------
-
-results.toList
+// MAGIC select searchSpace, count(1)  as cnt
+// MAGIC from  geospatial_searches.search_results_serverless
+// MAGIC group by searchSpace
+// MAGIC having count(1) > 1 
+// MAGIC order by cnt desc
+// MAGIC limit 100
