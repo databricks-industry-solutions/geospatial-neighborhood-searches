@@ -85,7 +85,7 @@ outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results
 ### Search Performance
 Search performance varries depending on several factors: size of origin and neighborhood tables, density of locations, search radius, and max results. General guidance for using Spark indexes (Z-order by) is provided below. 
 
-|Neibhorhood table size|Avg Search Time Per Record|Origin Table Throughput: 100 partitions|Origin Table Throughput: 440 partitions|Origin Table Throughput: 3000 partitions|
+|Neighborhood table size|Avg Search Time Per Record|Origin Table Throughput: 100 partitions|Origin Table Throughput: 440 partitions|Origin Table Throughput: 3000 partitions|
 |--|--|--|--|--|
 |10K+|0.2s|30K per minute|132K per minute|900K per minute|
 |100K+|0.5s|12K per minute|52K per minute|360K per minute|
