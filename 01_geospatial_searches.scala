@@ -7,21 +7,15 @@
 dbutils.widgets.text("Radius", "25")
 dbutils.widgets.text("maxResults", "100")
 dbutils.widgets.text("measurementType", "miles")
-dbutils.widgets.text("ServerlessUrl", "jdbc:spark//") //Open Spark Serverless Cluster Configuration -> "Advanced Options" -> "JDBC/ODBC" -> "JDBC Url"
-dbutils.widgets.text("authToken", "<personal-access-token>")
-//For generating tokenf or PWD, follow instructions at https://docs.databricks.com/dev-tools/auth.html#pat
-
+dbutils.widgets.text("ServerlessUrl", "jdbc:databricks://") //Open Spark Serverless Cluster Configuration -> "Advanced Options" -> "JDBC/ODBC" -> "JDBC Url"
 val tempTable = "geospatial_searches.provider_facilities_temp" 
 
 // COMMAND ----------
 
 // DBTITLE 1,Ensure params are populated correctly
-val jdbcUrl = dbutils.widgets.get("ServerlessUrl") + ";PWD=" + dbutils.widgets.get("authToken") 
+val jdbcUrl = dbutils.widgets.get("ServerlessUrl") + ";PWD=" + dbutils.notebook.getContext.apiToken.getOrElse("")
 
-require(dbutils.widgets.get("authToken") != "<personal-access-token>", 
-"An access Token required to connect to Databricks Serverless SQL. Please follow follow instructions at https://docs.databricks.com/dev-tools/auth.html#pat for generating one")
-
-require(dbutils.widgets.get("ServerlessUrl") != "jdbc:spark//", "Databricks Serverless compute is required. Please createt this compute resource if it doesn't exist and populate the JDBC connection information via 'Serverless Cluster Configuration' -> 'Advanced Options' -> 'JDBC/ODBC' -> 'JDBC Url'")
+require(dbutils.widgets.get("ServerlessUrl") != "jdbc:databricks://", "Databricks Serverless compute is required. Please create this compute resource if it doesn't exist and populate the JDBC connection information via 'Serverless Cluster Configuration' -> 'Advanced Options' -> 'JDBC/ODBC' -> 'JDBC Url'")
 
 // COMMAND ----------
 

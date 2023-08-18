@@ -25,10 +25,42 @@
 
 # DBTITLE 0,Install util packages
 # MAGIC %pip install git+https://github.com/databricks-academy/dbacademy@v1.0.13 git+https://github.com/databricks-industry-solutions/notebook-solution-companion@safe-print-html --quiet --disable-pip-version-check
+# MAGIC dbutils.library.restartPython()
 
 # COMMAND ----------
 
 from solacc.companion import NotebookSolutionCompanion
+nsc = NotebookSolutionCompanion()
+user_name = nsc.w.current_user.me().user_name
+
+# COMMAND ----------
+
+from databricks.sdk import WorkspaceClient
+import time
+w = WorkspaceClient()
+
+# COMMAND ----------
+
+created = w.warehouses.create(name=f'geospatial-search-solacc-{time.time_ns()}',
+                              cluster_size="2X-Small",
+                              max_num_clusters=1,
+                              auto_stop_mins=10,
+                              enable_serverless_compute=True).result()
+
+# COMMAND ----------
+
+created
+
+# COMMAND ----------
+
+# MAGIC %sh
+# MAGIC rm -rf /dbfs/tmp/solacc/geospatial_search/jar/
+# MAGIC mkdir -p /dbfs/tmp/solacc/geospatial_search/jar/
+# MAGIC cd /dbfs/tmp/solacc/geospatial_search/jar/
+# MAGIC
+# MAGIC wget https://github.com/databricks-industry-solutions/geospatial-neighborhood-searches/releases/download/v0.0.1/geospatial-searches-0.0.1_assembly.jar
+# MAGIC wget https://ohdsi.github.io/DatabaseConnectorJars/SimbaSparkV2.6.21.zip
+# MAGIC unzip SimbaSparkV2.6.21.zip
 
 # COMMAND ----------
 
@@ -37,45 +69,53 @@ job_json = {
         "max_concurrent_runs": 1,
         "tags": {
             "usage": "solacc_testing",
-            "group": "SOLACC",
-            "accelerator": "sample-solacc"
+            "group": "HLS",
+            "accelerator": "geospatial-search"
         },
         "tasks": [
             {
-                "job_cluster_key": "sample_solacc_cluster",
+                "job_cluster_key": "hls_geo_search_cluster",
                 "notebook_task": {
-                    "notebook_path": f"01_Introduction_And_Setup"
+                    "notebook_path": f"00_intro"
                 },
-                "task_key": "sample_solacc_01"
+                "task_key": "hls_geo_search_00"
             },
             {
-                "job_cluster_key": "sample_solacc_cluster",
+                "job_cluster_key": "hls_geo_search_cluster",
                 "notebook_task": {
-                    "notebook_path": f"02_Analysis"
+                    "notebook_path": f"01_geospatial_searches"
                 },
-                "task_key": "sample_solacc_02",
+                "base_parameters": {
+                        "ServerlessUrl": created.jdbc_url
+                },
+                "task_key": "hls_geo_search_01",
                 "depends_on": [
                     {
-                        "task_key": "sample_solacc_01"
+                        "task_key": "hls_geo_search_00"
+                    }
+                ],
+                "libraries": [
+                    {
+                        "jar": "dbfs:/tmp/solacc/geospatial_search/jar/geospatial-searches-0.0.1_assembly.jar"
+                    },
+                    {
+                        "jar": "dbfs:/tmp/solacc/geospatial_search/jar/SparkJDBC42.jar"
                     }
                 ]
             }
         ],
         "job_clusters": [
             {
-                "job_cluster_key": "sample_solacc_cluster",
+                "job_cluster_key": "hls_geo_search_cluster",
                 "new_cluster": {
-                    "spark_version": "11.3.x-cpu-ml-scala2.12",
+                    "spark_version": "12.2.x-cpu-ml-scala2.12",
                 "spark_conf": {
                     "spark.databricks.delta.formatCheck.enabled": "false"
                     },
                     "num_workers": 2,
                     "node_type_id": {"AWS": "i3.xlarge", "MSA": "Standard_DS3_v2", "GCP": "n1-highmem-4"},
-                    "custom_tags": {
-                        "usage": "solacc_testing",
-                        "group": "SOLACC",
-                        "accelerator": "sample-solacc"
-                    },
+                    "single_user_name": user_name,
+                    "data_security_mode": "SINGLE_USER",
                 }
             }
         ]
@@ -85,4 +125,4 @@ job_json = {
 
 dbutils.widgets.dropdown("run_job", "False", ["True", "False"])
 run_job = dbutils.widgets.get("run_job") == "True"
-NotebookSolutionCompanion().deploy_compute(job_json, run_job=run_job)
+nsc.deploy_compute(job_json, run_job=run_job)

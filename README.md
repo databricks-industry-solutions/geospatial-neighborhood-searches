@@ -12,11 +12,11 @@ This repo provides a solution that provides accuracy and scale using Spark's dis
 
 ### Specifying a radius returns all points contained inside the associated point of origin.  
 
-![image](./img/upmc_childrens_hospital.png?raw=true)
+![image](https://raw.githubusercontent.com/databricks-industry-solutions/geospatial-neighborhood-searches/main/img/upmc_childrens_hospital.png?raw=true)
 
 ### And given many points of origin, all associated values are returned for each origin of interest.
 
-![image](./img/many_locations.png?raw=true)
+![image](https://raw.githubusercontent.com/databricks-industry-solutions/geospatial-neighborhood-searches/main/img/many_locations.png?raw=true)
 
 ## Getting started
 
