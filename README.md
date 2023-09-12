@@ -8,13 +8,13 @@ Determining nearby locations to a point on a map becomes difficult as datasets g
 
 ## An Accurate Scalable Solution
 
-This repo provides a solution that provides accuracy and scale using Spark's distributed data processing as well as high performant caching. In this repo we demonstrate how you can use Spark's Serverless SQL for a high performant cache or a cloud's NoSQL (the example provided here is using CosmosDB). This can be extended to other NoSQLs like BigTable, DynamoDB, and MongoDB. 
+This solution provides accuracy and scale using Spark's distributed data processing as well as high performant caching. In this repo we demonstrate how you can use Spark's Serverless SQL for a high performant cache or a cloud's NoSQL (the example provided here is using CosmosDB). This can be extended to other NoSQLs like BigTable, DynamoDB, and MongoDB. 
 
 ### Specifying a radius returns all points contained inside the associated point of origin.  
 
 ![image](https://raw.githubusercontent.com/databricks-industry-solutions/geospatial-neighborhood-searches/main/img/upmc_childrens_hospital.png?raw=true)
 
-### And given many points of origin, all associated values are returned for each origin of interest.
+### And given many points of origin, return all associated values for each point of interest.
 
 ![image](https://raw.githubusercontent.com/databricks-industry-solutions/geospatial-neighborhood-searches/main/img/many_locations.png?raw=true)
 
@@ -83,9 +83,9 @@ outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results
 | neighbors.ms|The unit of measurement for euclideanDistance (miles or kilometers)|
 
 ### Search Performance
-Search performance varries depending on several factors: size of origin and neighborhood tables, density of locations, search radius, and max results. General guidance for using Spark indexes (Z-order by) is provided below. 
+Search performance varies depending on several factors: size of origin and neighborhood tables, density of locations, search radius, and max results. General guidance for using Spark indexes (Z-order by) is provided below. 
 
-|Neibhorhood table size|Avg Search Time Per Record|Origin Table Throughput: 100 partitions|Origin Table Throughput: 440 partitions|Origin Table Throughput: 3000 partitions|
+|Neighborhood table size|Avg Search Time Per Record|Origin Table Throughput: 100 partitions|Origin Table Throughput: 440 partitions|Origin Table Throughput: 3000 partitions|
 |--|--|--|--|--|
 |10K+|0.2s|30K per minute|132K per minute|900K per minute|
 |100K+|0.5s|12K per minute|52K per minute|360K per minute|
@@ -134,7 +134,7 @@ ___
 
 ## Alternatives to Spark Serverless data cache: Cloud NoSQL 
 
-Included in this repo is an example imlpementation of using Azure's CosmosDB as a data cache. Other NoSQLs can be supported by implementing the DataStore trait. 
+Included in this repo is an example implementation of using Azure's CosmosDB as a data cache. Other NoSQLs can be supported by implementing the DataStore trait. 
 
 | library                                | description             | license    | source                                              | coordinates |
 |----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
