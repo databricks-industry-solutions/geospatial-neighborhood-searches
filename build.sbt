@@ -64,5 +64,4 @@ artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
   s"${name.value}-${version.value}." + artifact.extension
 }
 
-
-
+unmanagedSources / excludeFilter := HiddenFileFilter || "01_geospatial_searches.scala"

@@ -41,7 +41,11 @@ w = WorkspaceClient()
 
 # COMMAND ----------
 
-created = w.warehouses.create(name=f'geospatial-search-solacc-{time.time_ns()}',
+dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().getOrElse(None)[0:-1]
+
+# COMMAND ----------
+
+created = w.warehouses.create(name=f'geospatial-search-solacc-{user_name}',
                               cluster_size="2X-Small",
                               max_num_clusters=1,
                               auto_stop_mins=10,
@@ -49,7 +53,7 @@ created = w.warehouses.create(name=f'geospatial-search-solacc-{time.time_ns()}',
 
 # COMMAND ----------
 
-created
+print("Serverless connection string: " + created.jdbc_url)
 
 # COMMAND ----------
 
@@ -126,3 +130,11 @@ job_json = {
 dbutils.widgets.dropdown("run_job", "False", ["True", "False"])
 run_job = dbutils.widgets.get("run_job") == "True"
 nsc.deploy_compute(job_json, run_job=run_job)
+
+# COMMAND ----------
+
+#Clean up serverless cluster
+cluster_id = [x.id for x in w.warehouses.list() if x.name == created.name]
+print(cluster_id)
+if len(cluster_id) > 0: 
+  w.warehouses.delete(cluster_id)
