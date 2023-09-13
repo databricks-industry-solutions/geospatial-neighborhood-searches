@@ -14,13 +14,8 @@ val tempTable = "geospatial_searches.provider_facilities_temp"
 
 // COMMAND ----------
 
-res2.toArray.mkString("")
-
-// COMMAND ----------
-
 // DBTITLE 1,Ensure params are populated correctly
-//val jdbcUrl = dbutils.widgets.get("ServerlessUrl") + "PWD=" + dbutils.notebook.getContext.apiToken.getOrElse("")
-val jdbcUrl = dbutils.widgets.get("ServerlessUrl") + "PWD=dkea2644007223f0b8e9f4a9a553282d64e"
+val jdbcUrl = dbutils.widgets.get("ServerlessUrl") + "UID=token;PWD=" + dbutils.notebook.getContext.apiToken.getOrElse("")
 require(dbutils.widgets.get("ServerlessUrl") != "jdbc:databricks://", "Databricks Serverless compute is required. Please create this compute resource if it doesn't exist and populate the JDBC connection information via 'Serverless Cluster Configuration' -> 'Advanced Options' -> 'JDBC/ODBC' -> 'JDBC Url'")
 
 // COMMAND ----------
