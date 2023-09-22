@@ -1,6 +1,6 @@
 // Databricks notebook source
 // MAGIC %md
-// MAGIC # Setting up Parameters
+// MAGIC # Setting up Search Parameters
 
 // COMMAND ----------
 
@@ -42,7 +42,7 @@ try{
 // COMMAND ----------
 
 // MAGIC %md
-// MAGIC # Create Input Datasets
+// MAGIC # Create Input Datasets 
 // MAGIC
 // MAGIC Using Ribbon Health's provider directory sample dataset we will perform a search for members searching for care nearby.
 
@@ -55,14 +55,18 @@ try{
 
 // COMMAND ----------
 
+// MAGIC %md ## Ribbon Health's Provider Directory
+
+// COMMAND ----------
+
 // DBTITLE 1,Load Sample Provider Dataset
 // MAGIC %python
-// MAGIC #dataset included in Github repo ./src/test/scala/resources/random_geo_sample.csv
+// MAGIC #dataset included in Github repo ./src/test/scala/resources/ribbon_health_directory_la_ma_20230911_sample.csv
 // MAGIC import os
 // MAGIC df = ( spark.read.format("csv")
 // MAGIC         .option("header","true")
-// MAGIC         .load('file:///' + os.path.abspath('./src/test/scala/resources/random_geo_sample.csv'))
-// MAGIC ).limit(1000)
+// MAGIC         .load('file:///' + os.path.abspath('./src/test/scala/resources/ribbon_health_directory_la_ma_20230911_sample.csv'))
+// MAGIC )
 // MAGIC df.show() #10,000 Rows
 
 // COMMAND ----------
@@ -71,6 +75,10 @@ try{
 // MAGIC %python
 // MAGIC sql("""DROP TABLE IF EXISTS provider_facilities""")
 // MAGIC df.write.saveAsTable("provider_facilities")
+
+// COMMAND ----------
+
+// MAGIC %md ## Synthetic Member Data
 
 // COMMAND ----------
 
@@ -88,11 +96,11 @@ implicit val spark2 = spark
 
 /*
  * given an RDD of id/lat/long values, generate random lat/long values
- *   @param random sample of 10K values from above csv file
+ *   @param random sample of ~500 values from above csv file
  *   @param distanceInMiles = max distance of randomly generated values
  *   @param number of random values to generate from each point in the dataset
  * 
- *    e.g. 10K (size of RDD) * 5 (default number of iterations) = Dataset of 50,000 rows to search through 
+ *    e.g. 500 (size of RDD) * 100 (default number of iterations) = Dataset of 50,000 rows to search through 
  */
 def generateRandomValues(df: Dataset[Row], distanceInMiles: Integer = 50, numIterations: Integer = 5): Dataset[Row] = {
   val r = scala.util.Random

@@ -1,6 +1,6 @@
 ![image](https://user-images.githubusercontent.com/86326159/206014015-a70e3581-e15c-4a10-95ef-36fd5a560717.png)
 
-# Scaling Geospatial Nearest Neighbor Searches with Spark Serverless SQL
+# Scaling Geospatial Nearest Neighbor Searches 
 
 ## Problem Statement
 
@@ -27,7 +27,7 @@ This solution provides accuracy and scale using Spark's distributed data process
 
 ### Sample of Running the search 
 
-Data Dictionary ofinput/output can be found [below](#input-data-dictionary). 
+Data Dictionary ofinput/output can be found [below](#data-dictionaries). 
 
 ``` scala
 import com.databricks.industry.solutions.geospatial.searches._ 
@@ -56,14 +56,17 @@ val outputDF = ds.fromSearchResultRDD(resultRDD)
 outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results")
 ```
 
-### Using Ribbon Health's Provider Directory to Find Care
+## A Common Healthcare Problem & Solution with Ribbon Health
 
-In [01_geospatial_searches](01_geospatial_searches.scala) we demonstrate using a sample dataset from Ribbon for a Medicare Advantage plan in the Los Angeles area to find and prioritize member care.
+For healthcare a common challenge is to find the most appropriate quality care for a member. In [01_geospatial_searches](01_geospatial_searches.scala) we demonstrate solving this problem using a sample dataset from Ribbon for a Medicare Advantage plan in the Los Angeles area to find and prioritize member care.
+
+As of this release, Ribbon's Provider Directory data includes NPIs, practice locations, contact information with confidence scores, specialties, location types, relative cost and experience, areas of focus, and accepted insurance. The dataset also has broad coverage, including 99.9% of providers, 1.7M unique service locations, and insurance coverage for 90.1% of lives covered across all lines of business and payers. The data is continuously checked and cross-checked to ensure the most up-to-date information is shown. More information can be found in [Databricks Marketplace](https://www.databricks.com/product/marketplace)
 
 > **_Disclaimer:_**  By receiving and using the data being provided by Ribbon Health, the user accepts, acknowledges and agrees that the data, and any results therefrom is provided “as is” and to the fullest extent permitted by law, Ribbon Health disclaims all warranties, express or implied, including, but not limited to, implied warranties of merchantability, fitness for a particular purpose, or any warranty arising from a course of dealing, usage or trade practice.  Ribbon Health does not warrant that the data will be error free or will integrate with systems of any third party.
 
+## Data Dictionaries
 
-### Input Data Dictionary
+### Input
 
 Two tables are required with columns specified below. One is considered to have origin points and the other is neighborhoods to be found around points of origin (note these 2 datasets can refer to the same table). Duplicate locations with different IDs in the table are also acceptable. 
 
@@ -75,7 +78,7 @@ Two tables are required with columns specified below. One is considered to have 
 
 > **Warning** It is best practice to filter out invalid lat/long values. This can cause cartesian products and greatly increase runtimes.
 
-### Output Data Dictionary
+### Output
 
 |Column|Description|
 |---|---|
@@ -91,8 +94,8 @@ Two tables are required with columns specified below. One is considered to have 
 | neighbors.euclideanDistance|Distance between origin point and neighbor. The Unit is either Km or Mi matching the input specified|
 | neighbors.ms|The unit of measurement for euclideanDistance (miles or kilometers)|
 
-### Search Performance
-Search performance varies depending on several factors: size of origin and neighborhood tables, density of locations, search radius, and max results. General guidance for using Spark indexes (Z-order by) is provided below. 
+## Performance Tuning
+Search performance varies depending on several factors: size of origin and neighborhood tables, density of locations, search radius, and max results. General guidance for using Spark indexes (Z-order by) is provided below. Search time is included in the output data dictionary for the purpose of further fine tuning results.
 
 |Neighborhood table size|Avg Search Time Per Record|Origin Table Throughput: 100 partitions|Origin Table Throughput: 440 partitions|Origin Table Throughput: 3000 partitions|
 |--|--|--|--|--|
