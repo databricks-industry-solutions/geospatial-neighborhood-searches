@@ -1,6 +1,10 @@
 // Databricks notebook source
+// MAGIC %md # Finding and ranking nearest healthcare providers
+
+// COMMAND ----------
+
 // MAGIC %md
-// MAGIC # Setting up Search Parameters
+// MAGIC ## Setting up Search Parameters
 
 // COMMAND ----------
 
@@ -15,7 +19,7 @@ val tempTable = "geospatial_searches.provider_facilities_temp"
 // COMMAND ----------
 
 // DBTITLE 1,Search Related Params
-dbutils.widgets.text("radius", "25")
+dbutils.widgets.text("radius", "10")
 dbutils.widgets.text("maxResults", "100")
 dbutils.widgets.text("measurementType", "miles")
 
@@ -42,7 +46,7 @@ try{
 // COMMAND ----------
 
 // MAGIC %md
-// MAGIC # Create Input Datasets 
+// MAGIC ## Create Input Datasets 
 // MAGIC
 // MAGIC Using Ribbon Health's provider directory sample dataset we will perform a search for members searching for care nearby.
 
@@ -55,7 +59,7 @@ try{
 
 // COMMAND ----------
 
-// MAGIC %md ## Ribbon Health's Provider Directory
+// MAGIC %md ### Ribbon Health's Provider Directory
 
 // COMMAND ----------
 
@@ -63,13 +67,14 @@ try{
 // MAGIC %python
 // MAGIC #dataset included in Github repo ./src/test/scala/resources/ribbon_health_directory_la_ma_20230911_sample.csv
 // MAGIC import os
+// MAGIC from pyspark.sql.functions import col
 // MAGIC df = ( spark.read.format("csv")
 // MAGIC         .option("header","true")
 // MAGIC         .option("quote", "\"")
 // MAGIC         .option("escape", "\"")
 // MAGIC         .load('file:///' + os.path.abspath('./src/test/scala/resources/ribbon_health_directory_la_ma_20230911_sample.csv'))
-// MAGIC )
-// MAGIC df.show() #~500 rows
+// MAGIC ).withColumn("id",col("node_uuid"))
+// MAGIC df.show() #500 rows
 
 // COMMAND ----------
 
@@ -80,7 +85,7 @@ try{
 
 // COMMAND ----------
 
-// MAGIC %md ## Synthetic Member Data
+// MAGIC %md ### Synthetic Member Data
 
 // COMMAND ----------
 
@@ -98,13 +103,14 @@ implicit val spark2 = spark
 
 /*
  * given an RDD of id/lat/long values, generate random lat/long values
- *   @param random sample of ~500 values from above csv file
+ *   @param random sample of 500 values from above csv file
  *   @param distanceInMiles = max distance of randomly generated values
  *   @param number of random values to generate from each point in the dataset
  * 
- *    e.g. 500 (size of RDD) * 100 (default number of iterations) = Dataset of 50,000 rows to search through 
+ *    e.g. 500 (size of provider dataset) * 10 (default number of iterations) = Dataset of 5,000 rows to search through 
+ *       - Default is a smaller cluster and dataset
  */
-def generateRandomValues(df: Dataset[Row], distanceInMiles: Integer = 50, numIterations: Integer = 5): Dataset[Row] = {
+def generateRandomValues(df: Dataset[Row], distanceInMiles: Integer = 50, numIterations: Integer = 10): Dataset[Row] = {
   val r = scala.util.Random
   def newInt() = r.nextInt(2*distanceInMiles) - distanceInMiles
   def newPoint(point: WGS84Point) = GeoSearch.addDistanceToLatitude(newInt(), GeoSearch.addDistanceToLongitude(newInt(), point))
@@ -130,7 +136,7 @@ df.show()
 
 // COMMAND ----------
 
-// MAGIC %md # Run Search Algorithm 
+// MAGIC %md ## Run Search Algorithm 
 
 // COMMAND ----------
 
@@ -142,14 +148,10 @@ val ds = SparkServerlessDS.fromDF(spark.table("provider_facilities"), jdbcUrl, t
 
 // COMMAND ----------
 
-// MAGIC %md ## Setting search parallelism 
-// MAGIC
-// MAGIC This is based upon CPUs available to your cluster (faster runtimes with higher parallelism)
-
-// COMMAND ----------
-
 /*
-* Set numParallel value to the number of CPUs in your attached spark cluster
+* Set numPartitions value to the number of CPUs in your attached spark cluster
+*  - increasing numPartitions and cluster CPUs available will lead to faster results (higher level of parallel search)
+*  - default using 8 CPUs runs ~5 minutes
 */
 
 val searchRDD = ds.toInqueryRDD(spark.sql(""" select * from geospatial_searches.member_locations"""), dbutils.widgets.get("radius").toInt, dbutils.widgets.get("maxResults").toInt, dbutils.widgets.get("measurementType")).repartition(dbutils.widgets.get("numPartitions").toInt)
@@ -158,7 +160,7 @@ ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatia
 
 // COMMAND ----------
 
-// MAGIC %md ## Viewing the Results
+// MAGIC %md ### Viewing Sample Results
 
 // COMMAND ----------
 
@@ -169,7 +171,15 @@ ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatia
 
 // COMMAND ----------
 
-// MAGIC %md # Performance Tuning
+// MAGIC %md ### Finding Nearest Providers by Specialty  
+
+// COMMAND ----------
+
+
+
+// COMMAND ----------
+
+// MAGIC %md ### Performance Metrics & Tuning
 
 // COMMAND ----------
 
@@ -198,7 +208,7 @@ spark.table("geospatial_searches.search_results_serverless").select("searchTimer
 // COMMAND ----------
 
 // MAGIC %sql 
-// MAGIC --Demonstrating opportunity for performance enhancement https://github.com/databricks-industry-solutions/geospatial-neighborhood-searches/issues/10
+// MAGIC --Demonstrating opportunity for performance enhancement by reusing query results https://github.com/databricks-industry-solutions/geospatial-neighborhood-searches/issues/10
 // MAGIC
 // MAGIC select searchSpace, count(1)  as cnt
 // MAGIC from  geospatial_searches.search_results_serverless
