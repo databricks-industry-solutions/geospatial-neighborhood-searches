@@ -81,7 +81,7 @@ class SparkServerlessDS(val tableName: String, val jdbcURL: String) extends Data
       recList.map(rec => {
         val distanceKM = inquire.rec.distanceKM(rec)
         val distanceResult = inquire.ms match {
-          case Measurement.Miles | Measurement.Mi => GeoSearch.sizeAsMi(distanceKM, inquire.ms)
+          case Measurement.Miles | Measurement.Mi => GeoSearch.sizeAsMi(distanceKM, Measurement.Km)
           case _ => distanceKM
         }
         if ( distanceKM > searchDistanceKM )
