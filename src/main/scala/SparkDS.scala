@@ -45,7 +45,7 @@ object SparkServerlessDS {
   }
 
   def connect(jdbcURL: String): Connection = {
-    Class.forName("com.simba.spark.jdbc.Driver")
+    Class.forName("com.databricks.client.jdbc.Driver")
     DriverManager.getConnection(jdbcURL)
   }
 }
