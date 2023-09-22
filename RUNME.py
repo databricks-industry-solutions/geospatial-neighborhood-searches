@@ -35,36 +35,15 @@ user_name = nsc.w.current_user.me().user_name
 
 # COMMAND ----------
 
-from databricks.sdk import WorkspaceClient
-import time
-w = WorkspaceClient()
-
-# COMMAND ----------
-
-dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().getOrElse(None)[0:-1]
-
-# COMMAND ----------
-
-created = w.warehouses.create(name=f'geospatial-search-solacc-{user_name}',
-                              cluster_size="2X-Small",
-                              max_num_clusters=1,
-                              auto_stop_mins=10,
-                              enable_serverless_compute=True).result()
-
-# COMMAND ----------
-
-print("Serverless connection string: " + created.jdbc_url)
-
-# COMMAND ----------
-
 # MAGIC %sh
 # MAGIC rm -rf /dbfs/tmp/solacc/geospatial_search/jar/
 # MAGIC mkdir -p /dbfs/tmp/solacc/geospatial_search/jar/
 # MAGIC cd /dbfs/tmp/solacc/geospatial_search/jar/
 # MAGIC
 # MAGIC wget https://github.com/databricks-industry-solutions/geospatial-neighborhood-searches/releases/download/v0.0.1/geospatial-searches-0.0.1_assembly.jar
-# MAGIC wget https://ohdsi.github.io/DatabaseConnectorJars/SimbaSparkV2.6.21.zip
-# MAGIC unzip SimbaSparkV2.6.21.zip
+# MAGIC wget https://databricks-bi-artifacts.s3.us-east-2.amazonaws.com/simbaspark-drivers/jdbc/2.6.34/DatabricksJDBC42-2.6.34.1058.zip
+# MAGIC unzip DatabricksJDBC42-2.6.34.1058.zip
+# MAGIC mv  DatabricksJDBC42-2.6.34.1058\ 2/DatabricksJDBC42.jar .
 
 # COMMAND ----------
 
@@ -89,9 +68,6 @@ job_json = {
                 "notebook_task": {
                     "notebook_path": f"01_geospatial_searches"
                 },
-                "base_parameters": {
-                        "ServerlessUrl": created.jdbc_url
-                },
                 "task_key": "hls_geo_search_01",
                 "depends_on": [
                     {
@@ -103,7 +79,7 @@ job_json = {
                         "jar": "dbfs:/tmp/solacc/geospatial_search/jar/geospatial-searches-0.0.1_assembly.jar"
                     },
                     {
-                        "jar": "dbfs:/tmp/solacc/geospatial_search/jar/SparkJDBC42.jar"
+                        "jar": "dbfs:/tmp/solacc/geospatial_search/jar/DatabricksJDBC42.jar"
                     }
                 ]
             }
@@ -130,11 +106,3 @@ job_json = {
 dbutils.widgets.dropdown("run_job", "False", ["True", "False"])
 run_job = dbutils.widgets.get("run_job") == "True"
 nsc.deploy_compute(job_json, run_job=run_job)
-
-# COMMAND ----------
-
-#Clean up serverless cluster
-cluster_id = [x.id for x in w.warehouses.list() if x.name == created.name]
-print(cluster_id)
-if len(cluster_id) > 0: 
-  w.warehouses.delete(cluster_id)

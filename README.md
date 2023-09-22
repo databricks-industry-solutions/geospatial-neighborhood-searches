@@ -20,25 +20,15 @@ This solution provides accuracy and scale using Spark's distributed data process
 
 ## Getting started
 
-### Installation for using Spark Serverless as a data cache
+### Install and use Spark Serverless as a data cache
 
 1. Attach jar from this Github repo (under "releases") as a cluster library to a cluster running **Spark 3.3.1, Scala 2.12**
-2. Download and attach the [Spark JDBC Driver](https://ohdsi.github.io/DatabaseConnectorJars/SimbaSparkV2.6.21.zip) as a cluster library
+2. Download and attach the [Spark JDBC Driver](https://www.databricks.com/%20%20spark/jdbc-drivers-download) as a cluster library
 
-### Input Data Dictionary
+### Sample of Running the search 
 
-Two tables are required with columns specified below. One is considered to have origin points and the other is neighborhoods to be found around points of origin (note these 2 datasets can refer to the same table). Duplicate locations with different IDs in the table are also acceptable. 
+Data Dictionary ofinput/output can be found [below](#input-data-dictionary). 
 
-|Column|Description|Expected Type|
-|--|--|--|
-|id|A unique identifier to be used to re-identify records and relate back to other datasets|String|
-|latitude|the latitude value of the location|Double|
-|longitude|the longitude value of the location|Double|
-
-> :warning: It is best practice to filter out invalid lat/long values. This can cause cartesian products and greatly increase runtimes.
-
-
-### Running the search
 ``` scala
 import com.databricks.industry.solutions.geospatial.searches._ 
 implicit val spark2 = spark 
@@ -57,14 +47,33 @@ val maxResults = 100
 val degreeOfDataParallelism = 48 //This value should match the # of CPUs your cluster has. Increase for more parallelism (faster)
 
 //Running the algorithm
-val ds = SparkServerlessDS.fromDF(spark.table(neighborTable), jdbcUrl, tempWorkTable)
+val ds = SparkServerlessDS.fromDF(spark.table(neighborTable), jdbcUrl, tempWorkTable).asInstanceOf[SparkServerlessDS]
 val searchRDD = ds.toInqueryRDD(spark.table(originTable), radius, maxResults, measurementType).repartition(degreeOfDataParallelism)
-val resultRDD = ds.asInstanceOf[SparkServerlessDS].search(searchRDD)
+val resultRDD = ds.search(searchRDD)
 val outputDF = ds.fromSearchResultRDD(resultRDD)
 
 //Saving the results
 outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results")
 ```
+
+### Using Ribbon Health's Provider Directory to Find Care
+
+In *01_geospatial_searches.scala* we demonstrate using a sample dataset from Ribbon for a Medicare Advantage plan in the Los Angeles area to find and prioritize member care.
+
+> **_Disclaimer:_**  By receiving and using the data being provided by Ribbon Health, the user accepts, acknowledges and agrees that the data, and any results therefrom is provided “as is” and to the fullest extent permitted by law, Ribbon Health disclaims all warranties, express or implied, including, but not limited to, implied warranties of merchantability, fitness for a particular purpose, or any warranty arising from a course of dealing, usage or trade practice.  Ribbon Health does not warrant that the data will be error free or will integrate with systems of any third party.
+
+
+### Input Data Dictionary
+
+Two tables are required with columns specified below. One is considered to have origin points and the other is neighborhoods to be found around points of origin (note these 2 datasets can refer to the same table). Duplicate locations with different IDs in the table are also acceptable. 
+
+|Column|Description|Expected Type|
+|--|--|--|
+|id|A unique identifier to be used to re-identify records and relate back to other datasets|String|
+|latitude|the latitude value of the location|Double|
+|longitude|the longitude value of the location|Double|
+
+> **Warning** It is best practice to filter out invalid lat/long values. This can cause cartesian products and greatly increase runtimes.
 
 ### Output Data Dictionary
 
@@ -132,7 +141,7 @@ ___
 &copy; 2022 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the Databricks License [https://databricks.com/db-license-source].  All included or referenced third party libraries are subject to the licenses set forth below.
 
 
-## Alternatives to Spark Serverless data cache: Cloud NoSQL 
+## Alternatives to Spark Serverless data cache: Cloud NoSQLs 
 
 Included in this repo is an example implementation of using Azure's CosmosDB as a data cache. Other NoSQLs can be supported by implementing the DataStore trait. 
 
@@ -164,7 +173,7 @@ Included in this repo is an example implementation of using Azure's CosmosDB as 
 }
 ```
 
-### Running setup configurations
+### Sample setup and run
 
 ``` scala
 import com.azure.cosmos.spark._, com.azure.cosmos.spark.CosmosConfig, com.azure.cosmos.spark.CosmosAccountConfig, com.databricks.industry.solutions.geospatial.searches._
@@ -186,7 +195,7 @@ implicit val cfg = Map("spark.cosmos.accountEndpoint" -> cosmosEndpoint,
   "spark.cosmos.write.strategy" -> "ItemOverwrite"
 )
 
-//Populate the NoSQL DataStore from the first dataset (VA Hospital location dataset)
+//Populate the NoSQL DataStore from the first dataset 
 val ds = CosmosDS.fromDF(spark.table(searchTable), cfg)
 
 //Set radius to search for
@@ -205,23 +214,3 @@ val searchRDD = ds.toInqueryRDD(spark.sql(targetTable), radius, maxResults, meas
 val resultRDD = ds.asInstanceOf[CosmosDS].search(searchRDD)
 ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatial_searches.sample_results")
 ```
-
-### Performance on **Sparse Dataset comparison**
-
-``` scala
-//Avg 0.3810 seconds per request
-spark.sql("select avg(searchTimerSeconds) from ...")
-
-//Median 0.086441679 seconds per request
-spark.table("...").select("searchTimerSeconds")
-        .stat
-        .approxQuantile("searchTimerSeconds", Array(0.5), 0.001) //median
-        .head
-
-//75th percentile 0.528239604 seconds per request
-spark.table("...").select("searchTimerSeconds")
-        .stat
-        .approxQuantile("searchTimerSeconds", Array(0.75), 0.001) 
-        .head
-```
-

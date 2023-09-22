@@ -4,34 +4,41 @@
 
 // COMMAND ----------
 
-dbutils.widgets.text("Radius", "25")
-dbutils.widgets.text("maxResults", "100")
-dbutils.widgets.text("measurementType", "miles")
+// DBTITLE 1,Serverless Params
 dbutils.widgets.text("ServerlessUrl", "jdbc:databricks://") //This can be done with either 
 //1. an existing serverless endpoint: Spark Serverless Cluster Configuration -> "Advanced Options" -> "JDBC/ODBC" -> "JDBC Url" 
-//2.  create one dynamically and is the "Serverless connection string" in RUNME.py
+//2.  create one dynamically through Databricks SDK 
+dbutils.widgets.text("AuthToken", "") 
+//Can be created by going to "User profile" -> developer -> Access Token 
 val tempTable = "geospatial_searches.provider_facilities_temp" 
 
 // COMMAND ----------
 
-// DBTITLE 1,Ensure params are populated correctly
-val jdbcUrl = dbutils.widgets.get("ServerlessUrl") + "UID=token;PWD=" + dbutils.notebook.getContext.apiToken.getOrElse("")
-require(dbutils.widgets.get("ServerlessUrl") != "jdbc:databricks://", "Databricks Serverless compute is required. Please create this compute resource if it doesn't exist and populate the JDBC connection information via 'Serverless Cluster Configuration' -> 'Advanced Options' -> 'JDBC/ODBC' -> 'JDBC Url'")
+// DBTITLE 1,Search Related Params
+dbutils.widgets.text("radius", "25")
+dbutils.widgets.text("maxResults", "100")
+dbutils.widgets.text("measurementType", "miles")
+
+// COMMAND ----------
+
+// DBTITLE 1,Performance Related Params 
+dbutils.widgets.text("numPartitions", "8")
 
 // COMMAND ----------
 
 // DBTITLE 1,Test Spark Serverless Connectivity
 import com.databricks.industry.solutions.geospatial.searches._
-val con = SparkServerlessDS.connect(jdbcUrl)
-require(con.isClosed() == false, "Failed to connect to endpoint jdbcUrl: " + jdbcUrl)
-con.close()
-
-// COMMAND ----------
-
-//Search input Params
-val radius=25
-val maxResults = 100
-val measurementType="miles"
+val jdbcUrl = dbutils.widgets.get("ServerlessUrl") +  "UID=token;PWD="   + dbutils.widgets.get("AuthToken") + ";"
+try{ 
+  Class.forName("com.databricks.client.jdbc.Driver")
+  val con = SparkServerlessDS.connect(jdbcUrl)
+  require(con.isClosed() == false, "Failed to connect to endpoint jdbcUrl: " + jdbcUrl)
+  con.close()
+}catch {
+  case e : Exception => 
+   println("Failed to connect to Serverless " + e.getMessage) 
+   dbutils.notebook.exit("Stopping because serverless connectivity is not available")
+}
 
 // COMMAND ----------
 
@@ -54,7 +61,7 @@ val measurementType="miles"
 // MAGIC df = ( spark.read.format("csv")
 // MAGIC         .option("header","true")
 // MAGIC         .load('file:///' + os.path.abspath('./src/test/scala/resources/random_geo_sample.csv'))
-// MAGIC )
+// MAGIC ).limit(1000)
 // MAGIC df.show() #10,000 Rows
 
 // COMMAND ----------
@@ -86,9 +93,9 @@ implicit val spark2 = spark
  *   @param distanceInMiles = max distance of randomly generated values
  *   @param number of random values to generate from each point in the dataset
  * 
- *    e.g. 10K (size of RDD) * 25 (default number of iterations) = Dataset of 200,000 rows to search through 
+ *    e.g. 10K (size of RDD) * 5 (default number of iterations) = Dataset of 50,000 rows to search through 
  */
-def generateRandomValues(df: Dataset[Row], distanceInMiles: Integer = 50, numIterations: Integer = 25): Dataset[Row] = {
+def generateRandomValues(df: Dataset[Row], distanceInMiles: Integer = 50, numIterations: Integer = 5): Dataset[Row] = {
   val r = scala.util.Random
   def newInt() = r.nextInt(2*distanceInMiles) - distanceInMiles
   def newPoint(point: WGS84Point) = GeoSearch.addDistanceToLatitude(newInt(), GeoSearch.addDistanceToLongitude(newInt(), point))
@@ -135,9 +142,8 @@ val ds = SparkServerlessDS.fromDF(spark.table("provider_facilities"), jdbcUrl, t
 /*
 * Set numParallel value to the number of CPUs in your attached spark cluster
 */
-val numParallel = 96 //recommended for the sample dataset
 
-val searchRDD = ds.toInqueryRDD(spark.sql(""" select * from geospatial_searches.member_locations"""), radius, maxResults, measurementType).repartition(numParllel)
+val searchRDD = ds.toInqueryRDD(spark.sql(""" select * from geospatial_searches.member_locations"""), dbutils.widgets.get("radius").toInt, dbutils.widgets.get("maxResults").toInt, dbutils.widgets.get("measurementType")).repartition(dbutils.widgets.get("numPartitions").toInt)
 val resultRDD = ds.search(searchRDD)
 ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatial_searches.search_results_serverless")
 
@@ -149,7 +155,8 @@ ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatia
 
 // MAGIC %sql
 // MAGIC
-// MAGIC SELECT * FROM  geospatial_searches.search_results_serverless limit 10;
+// MAGIC SELECT * FROM  geospatial_searches.search_results_serverless 
+// MAGIC limit 15;
 
 // COMMAND ----------
 
@@ -166,7 +173,7 @@ ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatia
 // COMMAND ----------
 
 // DBTITLE 1,Median Search Time 
-spark.table("geospatial_searches.va_facility_results_sparkserverless").select("searchTimerSeconds")
+spark.table("geospatial_searches.search_results_serverless").select("searchTimerSeconds")
         .stat
         .approxQuantile("searchTimerSeconds", Array(0.50), 0.001) //median
         .head
@@ -174,7 +181,7 @@ spark.table("geospatial_searches.va_facility_results_sparkserverless").select("s
 // COMMAND ----------
 
 // DBTITLE 1,75th Percentile
-spark.table("geospatial_searches.va_facility_results_sparkserverless").select("searchTimerSeconds")
+spark.table("geospatial_searches.search_results_serverless").select("searchTimerSeconds")
         .stat
         .approxQuantile("searchTimerSeconds", Array(0.75), 0.001) //median
         .head
