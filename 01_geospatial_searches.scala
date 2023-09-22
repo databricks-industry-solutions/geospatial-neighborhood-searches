@@ -65,9 +65,11 @@ try{
 // MAGIC import os
 // MAGIC df = ( spark.read.format("csv")
 // MAGIC         .option("header","true")
+// MAGIC         .option("quote", "\"")
+// MAGIC         .option("escape", "\"")
 // MAGIC         .load('file:///' + os.path.abspath('./src/test/scala/resources/ribbon_health_directory_la_ma_20230911_sample.csv'))
 // MAGIC )
-// MAGIC df.show() #10,000 Rows
+// MAGIC df.show() #~500 rows
 
 // COMMAND ----------
 
