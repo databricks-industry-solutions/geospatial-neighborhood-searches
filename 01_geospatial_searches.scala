@@ -187,6 +187,7 @@ ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatia
 // MAGIC ,address as provider_address
 // MAGIC ,npis as provider_npi_list
 // MAGIC ,location_types as provider_specialties
+// MAGIC --ranking care quality column can provide "best" choices for care
 // MAGIC FROM (
 // MAGIC   SELECT origin.id as member_id
 // MAGIC   ,explode(neighbors) as neighbor 
@@ -224,15 +225,3 @@ spark.table("geospatial_searches.search_results_serverless").select("searchTimer
         .stat
         .approxQuantile("searchTimerSeconds", Array(0.75), 0.001) //median
         .head
-
-// COMMAND ----------
-
-// MAGIC %sql 
-// MAGIC --Demonstrating opportunity for performance enhancement by reusing query results https://github.com/databricks-industry-solutions/geospatial-neighborhood-searches/issues/10
-// MAGIC
-// MAGIC select searchSpace, count(1)  as cnt
-// MAGIC from  geospatial_searches.search_results_serverless
-// MAGIC group by searchSpace
-// MAGIC having count(1) > 1 
-// MAGIC order by cnt desc
-// MAGIC limit 100
