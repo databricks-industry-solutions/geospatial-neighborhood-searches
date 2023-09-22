@@ -36,14 +36,15 @@ try{
   con.close()
 }catch {
   case e : Exception => 
-   println("Failed to connect to Serverless " + e.getMessage) 
-   dbutils.notebook.exit("Stopping because serverless connectivity is not available")
+   dbutils.notebook.exit("Stopping because serverless connectivity is not available due to error " + e.getMessage)
 }
 
 // COMMAND ----------
 
 // MAGIC %md
 // MAGIC # Create Input Datasets
+// MAGIC
+// MAGIC Using Ribbon Health's provider directory sample dataset we will perform a search for members searching for care nearby.
 
 // COMMAND ----------
 
@@ -54,7 +55,7 @@ try{
 
 // COMMAND ----------
 
-// DBTITLE 1,Load Sample Dataset
+// DBTITLE 1,Load Sample Provider Dataset
 // MAGIC %python
 // MAGIC #dataset included in Github repo ./src/test/scala/resources/random_geo_sample.csv
 // MAGIC import os
@@ -74,9 +75,7 @@ try{
 // COMMAND ----------
 
 // MAGIC %md
-// MAGIC Generate a second dataset randomly to perform search with the first dataset. 
-// MAGIC
-// MAGIC For example, we will consider the first dataset providers locations and the second dataset as member locations of whom we want to find the nearest providers for
+// MAGIC Generate a member dataset randomly generate to perform searches on 
 
 // COMMAND ----------
 

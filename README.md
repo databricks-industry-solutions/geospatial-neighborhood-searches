@@ -58,7 +58,7 @@ outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results
 
 ### Using Ribbon Health's Provider Directory to Find Care
 
-In *01_geospatial_searches.scala* we demonstrate using a sample dataset from Ribbon for a Medicare Advantage plan in the Los Angeles area to find and prioritize member care.
+In [01_geospatial_searches](01_geospatial_searches.scala) we demonstrate using a sample dataset from Ribbon for a Medicare Advantage plan in the Los Angeles area to find and prioritize member care.
 
 > **_Disclaimer:_**  By receiving and using the data being provided by Ribbon Health, the user accepts, acknowledges and agrees that the data, and any results therefrom is provided “as is” and to the fullest extent permitted by law, Ribbon Health disclaims all warranties, express or implied, including, but not limited to, implied warranties of merchantability, fitness for a particular purpose, or any warranty arising from a course of dealing, usage or trade practice.  Ribbon Health does not warrant that the data will be error free or will integrate with systems of any third party.
 
