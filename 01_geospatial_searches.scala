@@ -172,10 +172,30 @@ ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatia
 // COMMAND ----------
 
 // MAGIC %md ### Finding Nearest Providers by Specialty  
+// MAGIC
+// MAGIC The following query shows a sample selection of a members hospital choices with the distance from the hospital. 
+// MAGIC
+// MAGIC Commonly this type of view would be combined with a "ranking" of hospital quality and used for a member to determine the best choice for care. 
 
 // COMMAND ----------
 
-
+// MAGIC %sql 
+// MAGIC SELECT member_id
+// MAGIC ,neighbor.value.id as provider_id
+// MAGIC ,neighbor.euclideanDistance as distance_in_miles
+// MAGIC ,name as provider_name
+// MAGIC ,address as provider_address
+// MAGIC ,npis as provider_npi_list
+// MAGIC ,location_types as provider_specialties
+// MAGIC FROM (
+// MAGIC   SELECT origin.id as member_id
+// MAGIC   ,explode(neighbors) as neighbor 
+// MAGIC   FROM  geospatial_searches.search_results_serverless 
+// MAGIC )  search_results
+// MAGIC inner join provider_facilities
+// MAGIC   on neighbor.value.id = node_uuid
+// MAGIC    and location_types like "%Hospital%"
+// MAGIC limit 25
 
 // COMMAND ----------
 
