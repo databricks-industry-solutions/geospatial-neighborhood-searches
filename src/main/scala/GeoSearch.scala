@@ -133,8 +133,8 @@ object GeoSearch{
    */
   def getBoundingBox(center: WGS84Point, size: Integer, ms: Measurement.Value = Measurement.Mi): BoundingBox = {
     val sizeKM = sizeAsKM(size.toDouble,ms)
-    val southWestCorner = addDistanceToLongitude(-1 * size, addDistanceToLatitude(-1 * size, center))
-    val northEastCorner = addDistanceToLongitude(size, addDistanceToLatitude(size, center))
+    val southWestCorner = addDistanceToLongitude(-1 * sizeKM.toDouble, addDistanceToLatitude(-1 * sizeKM.toDouble, center))
+    val northEastCorner = addDistanceToLongitude(sizeKM.toDouble, addDistanceToLatitude(sizeKM.toDouble, center))
     new BoundingBox(southWestCorner, northEastCorner)
   }
 
@@ -146,7 +146,7 @@ object GeoSearch{
    *
    *  newLon = oldLon + (distanceKM * (1 / ((pi / 180) * radiusEathKM) )  /  (cos(latitude) * (pi / 180))
    */
-  def addDistanceToLongitude(distance: Integer, point: WGS84Point): WGS84Point = {
+  def addDistanceToLongitude(distance: Double, point: WGS84Point): WGS84Point = {
     new WGS84Point(point.getLatitude, {point.getLongitude + (distance * (1 / ((Math.PI / 180) * earthRadiusKm))) / Math.cos(point.getLatitude * (Math.PI / 180)) })
   }
 
@@ -158,7 +158,7 @@ object GeoSearch{
    *  @returns new point
    *  newLat = oldLat +  (distanceKM / radiusOfEarthKM) * (180 / pi) 
    */
-  def addDistanceToLatitude(distance: Integer, point: WGS84Point): WGS84Point = {
+  def addDistanceToLatitude(distance: Double, point: WGS84Point): WGS84Point = {
     new WGS84Point({point.getLatitude + (distance / earthRadiusKm.toDouble) * (180 / Math.PI)}, point.getLongitude)
   }
 

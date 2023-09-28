@@ -40,7 +40,7 @@ user_name = nsc.w.current_user.me().user_name
 # MAGIC mkdir -p /dbfs/tmp/solacc/geospatial_search/jar/
 # MAGIC cd /dbfs/tmp/solacc/geospatial_search/jar/
 # MAGIC
-# MAGIC wget https://github.com/databricks-industry-solutions/geospatial-neighborhood-searches/releases/download/v0.0.1/geospatial-searches-0.0.1_assembly.jar
+# MAGIC wget https://github.com/databricks-industry-solutions/geospatial-neighborhood-searches/releases/download/v0.0.2/geospatial-searches-0.0.2_assembly.jar
 # MAGIC wget https://databricks-bi-artifacts.s3.us-east-2.amazonaws.com/simbaspark-drivers/jdbc/2.6.34/DatabricksJDBC42-2.6.34.1058.zip
 # MAGIC unzip DatabricksJDBC42-2.6.34.1058.zip
 # MAGIC mv  DatabricksJDBC42-2.6.34.1058\ 2/DatabricksJDBC42.jar .
@@ -76,7 +76,7 @@ job_json = {
                 ],
                 "libraries": [
                     {
-                        "jar": "dbfs:/tmp/solacc/geospatial_search/jar/geospatial-searches-0.0.1_assembly.jar"
+                        "jar": "dbfs:/tmp/solacc/geospatial_search/jar/geospatial-searches-0.0.2_assembly.jar"
                     },
                     {
                         "jar": "dbfs:/tmp/solacc/geospatial_search/jar/DatabricksJDBC42.jar"
