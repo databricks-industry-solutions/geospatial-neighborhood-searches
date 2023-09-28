@@ -1,6 +1,6 @@
 ![image](https://user-images.githubusercontent.com/86326159/206014015-a70e3581-e15c-4a10-95ef-36fd5a560717.png)
 
-# Scaling Geospatial Nearest Neighbor Searches with Spark Serverless SQL
+# Scaling Geospatial Nearest Neighbor Searches 
 
 ## Problem Statement
 
@@ -8,37 +8,27 @@ Determining nearby locations to a point on a map becomes difficult as datasets g
 
 ## An Accurate Scalable Solution
 
-This repo provides a solution that provides accuracy and scale using Spark's distributed data processing as well as high performant caching. In this repo we demonstrate how you can use Spark's Serverless SQL for a high performant cache or a cloud's NoSQL (the example provided here is using CosmosDB). This can be extended to other NoSQLs like BigTable, DynamoDB, and MongoDB. 
+This solution provides accuracy and scale using Spark's distributed data processing as well as high performant caching. In this repo we demonstrate how you can use Spark's Serverless SQL for a high performant cache or a cloud's NoSQL (the example provided here is using CosmosDB). This can be extended to other NoSQLs like BigTable, DynamoDB, and MongoDB. 
 
 ### Specifying a radius returns all points contained inside the associated point of origin.  
 
-![image](./img/upmc_childrens_hospital.png?raw=true)
+![image](https://raw.githubusercontent.com/databricks-industry-solutions/geospatial-neighborhood-searches/main/img/upmc_childrens_hospital.png?raw=true)
 
-### And given many points of origin, all associated values are returned for each origin of interest.
+### And given many points of origin, return all associated values for each point of interest.
 
-![image](./img/many_locations.png?raw=true)
+![image](https://raw.githubusercontent.com/databricks-industry-solutions/geospatial-neighborhood-searches/main/img/many_locations.png?raw=true)
 
 ## Getting started
 
-### Installation for using Spark Serverless as a data cache
+### Install and use Spark Serverless as a data cache
 
 1. Attach jar from this Github repo (under "releases") as a cluster library to a cluster running **Spark 3.3.1, Scala 2.12**
-2. Download and attach the [Spark JDBC Driver](https://ohdsi.github.io/DatabaseConnectorJars/SimbaSparkV2.6.21.zip) as a cluster library
+2. Download and attach the [Spark JDBC Driver](https://www.databricks.com/%20%20spark/jdbc-drivers-download) as a cluster library
 
-### Input Data Dictionary
+### Sample of Running the search 
 
-Two tables are required with columns specified below. One is considered to have origin points and the other is neighborhoods to be found around points of origin (note these 2 datasets can refer to the same table). Duplicate locations with different IDs in the table are also acceptable. 
+Data Dictionary ofinput/output can be found [below](#data-dictionaries). 
 
-|Column|Description|Expected Type|
-|--|--|--|
-|id|A unique identifier to be used to re-identify records and relate back to other datasets|String|
-|latitude|the latitude value of the location|Double|
-|longitude|the longitude value of the location|Double|
-
-> :warning: It is best practice to filter out invalid lat/long values. This can cause cartesian products and greatly increase runtimes.
-
-
-### Running the search
 ``` scala
 import com.databricks.industry.solutions.geospatial.searches._ 
 implicit val spark2 = spark 
@@ -57,16 +47,38 @@ val maxResults = 100
 val degreeOfDataParallelism = 48 //This value should match the # of CPUs your cluster has. Increase for more parallelism (faster)
 
 //Running the algorithm
-val ds = SparkServerlessDS.fromDF(spark.table(neighborTable), jdbcUrl, tempWorkTable)
+val ds = SparkServerlessDS.fromDF(spark.table(neighborTable), jdbcUrl, tempWorkTable).asInstanceOf[SparkServerlessDS]
 val searchRDD = ds.toInqueryRDD(spark.table(originTable), radius, maxResults, measurementType).repartition(degreeOfDataParallelism)
-val resultRDD = ds.asInstanceOf[SparkServerlessDS].search(searchRDD)
+val resultRDD = ds.search(searchRDD)
 val outputDF = ds.fromSearchResultRDD(resultRDD)
 
 //Saving the results
 outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results")
 ```
 
-### Output Data Dictionary
+## A Common Healthcare Problem & Solution with Ribbon Health
+
+For healthcare a common challenge is to find the most appropriate quality care for a member. In [01_geospatial_searches](01_geospatial_searches.scala) we demonstrate solving this problem using a sample dataset from Ribbon for a Medicare Advantage plan in the Los Angeles area to find and prioritize member care.
+
+As of this release, Ribbon's Provider Directory data includes NPIs, practice locations, contact information with confidence scores, specialties, location types, relative cost and experience, areas of focus, and accepted insurance. The dataset also has broad coverage, including 99.9% of providers, 1.7M unique service locations, and insurance coverage for 90.1% of lives covered across all lines of business and payers. The data is continuously checked and cross-checked to ensure the most up-to-date information is shown. More information can be found in [Databricks Marketplace](https://www.databricks.com/product/marketplace)
+
+> **_Disclaimer:_**  By receiving and using the data being provided by Ribbon Health, the user accepts, acknowledges and agrees that the data, and any results therefrom is provided “as is” and to the fullest extent permitted by law, Ribbon Health disclaims all warranties, express or implied, including, but not limited to, implied warranties of merchantability, fitness for a particular purpose, or any warranty arising from a course of dealing, usage or trade practice.  Ribbon Health does not warrant that the data will be error free or will integrate with systems of any third party.
+
+## Data Dictionaries
+
+### Input
+
+Two tables are required with columns specified below. One is considered to have origin points and the other is neighborhoods to be found around points of origin (note these 2 datasets can refer to the same table). Duplicate locations with different IDs in the table are also acceptable. 
+
+|Column|Description|Expected Type|
+|--|--|--|
+|id|A unique identifier to be used to re-identify records and relate back to other datasets|String|
+|latitude|the latitude value of the location|Double|
+|longitude|the longitude value of the location|Double|
+
+> **Warning** It is best practice to filter out invalid lat/long values. This can cause cartesian products and greatly increase runtimes.
+
+### Output
 
 |Column|Description|
 |---|---|
@@ -82,10 +94,10 @@ outputDF.write.mode("overwrite").saveAsTable("geospatial_searches.search_results
 | neighbors.euclideanDistance|Distance between origin point and neighbor. The Unit is either Km or Mi matching the input specified|
 | neighbors.ms|The unit of measurement for euclideanDistance (miles or kilometers)|
 
-### Search Performance
-Search performance varries depending on several factors: size of origin and neighborhood tables, density of locations, search radius, and max results. General guidance for using Spark indexes (Z-order by) is provided below. 
+## Performance Tuning
+Search performance varies depending on several factors: size of origin and neighborhood tables, density of locations, search radius, and max results. General guidance for using Spark indexes (Z-order by) is provided below. Search time is included in the output data dictionary for the purpose of further fine tuning results.
 
-|Neibhorhood table size|Avg Search Time Per Record|Origin Table Throughput: 100 partitions|Origin Table Throughput: 440 partitions|Origin Table Throughput: 3000 partitions|
+|Neighborhood table size|Avg Search Time Per Record|Origin Table Throughput: 100 partitions|Origin Table Throughput: 440 partitions|Origin Table Throughput: 3000 partitions|
 |--|--|--|--|--|
 |10K+|0.2s|30K per minute|132K per minute|900K per minute|
 |100K+|0.5s|12K per minute|52K per minute|360K per minute|
@@ -132,9 +144,9 @@ ___
 &copy; 2022 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the Databricks License [https://databricks.com/db-license-source].  All included or referenced third party libraries are subject to the licenses set forth below.
 
 
-## Alternatives to Spark Serverless data cache: Cloud NoSQL 
+## Alternatives to Spark Serverless data cache: Cloud NoSQLs 
 
-Included in this repo is an example imlpementation of using Azure's CosmosDB as a data cache. Other NoSQLs can be supported by implementing the DataStore trait. 
+Included in this repo is an example implementation of using Azure's CosmosDB as a data cache. Other NoSQLs can be supported by implementing the DataStore trait. 
 
 | library                                | description             | license    | source                                              | coordinates |
 |----------------------------------------|-------------------------|------------|-----------------------------------------------------|------------------ |
@@ -164,7 +176,7 @@ Included in this repo is an example imlpementation of using Azure's CosmosDB as 
 }
 ```
 
-### Running setup configurations
+### Sample setup and run
 
 ``` scala
 import com.azure.cosmos.spark._, com.azure.cosmos.spark.CosmosConfig, com.azure.cosmos.spark.CosmosAccountConfig, com.databricks.industry.solutions.geospatial.searches._
@@ -186,7 +198,7 @@ implicit val cfg = Map("spark.cosmos.accountEndpoint" -> cosmosEndpoint,
   "spark.cosmos.write.strategy" -> "ItemOverwrite"
 )
 
-//Populate the NoSQL DataStore from the first dataset (VA Hospital location dataset)
+//Populate the NoSQL DataStore from the first dataset 
 val ds = CosmosDS.fromDF(spark.table(searchTable), cfg)
 
 //Set radius to search for
@@ -205,23 +217,3 @@ val searchRDD = ds.toInqueryRDD(spark.sql(targetTable), radius, maxResults, meas
 val resultRDD = ds.asInstanceOf[CosmosDS].search(searchRDD)
 ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatial_searches.sample_results")
 ```
-
-### Performance on **Sparse Dataset comparison**
-
-``` scala
-//Avg 0.3810 seconds per request
-spark.sql("select avg(searchTimerSeconds) from ...")
-
-//Median 0.086441679 seconds per request
-spark.table("...").select("searchTimerSeconds")
-        .stat
-        .approxQuantile("searchTimerSeconds", Array(0.5), 0.001) //median
-        .head
-
-//75th percentile 0.528239604 seconds per request
-spark.table("...").select("searchTimerSeconds")
-        .stat
-        .approxQuantile("searchTimerSeconds", Array(0.75), 0.001) 
-        .head
-```
-

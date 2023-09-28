@@ -1,47 +1,54 @@
 // Databricks notebook source
-// MAGIC %md
-// MAGIC # Setting up Parameters
+// MAGIC %md # Finding and ranking nearest healthcare providers
 
 // COMMAND ----------
 
-dbutils.widgets.text("Radius", "25")
-dbutils.widgets.text("maxResults", "100")
-dbutils.widgets.text("measurementType", "miles")
-dbutils.widgets.text("ServerlessUrl", "jdbc:spark//") //Open Spark Serverless Cluster Configuration -> "Advanced Options" -> "JDBC/ODBC" -> "JDBC Url"
-dbutils.widgets.text("authToken", "<personal-access-token>")
-//For generating tokenf or PWD, follow instructions at https://docs.databricks.com/dev-tools/auth.html#pat
+// MAGIC %md
+// MAGIC ## Setting up Search Parameters
 
+// COMMAND ----------
+
+// DBTITLE 1,Serverless Params
+dbutils.widgets.text("ServerlessUrl", "jdbc:databricks://") //This can be done with either 
+//1. an existing serverless endpoint: Spark Serverless Cluster Configuration -> "Advanced Options" -> "JDBC/ODBC" -> "JDBC Url" 
+//2.  create one dynamically through Databricks SDK 
+dbutils.widgets.text("AuthToken", "") 
+//Can be created by going to "User profile" -> developer -> Access Token 
 val tempTable = "geospatial_searches.provider_facilities_temp" 
 
 // COMMAND ----------
 
-// DBTITLE 1,Ensure params are populated correctly
-val jdbcUrl = dbutils.widgets.get("ServerlessUrl") + ";PWD=" + dbutils.widgets.get("authToken") 
+// DBTITLE 1,Search Related Params
+dbutils.widgets.text("radius", "10")
+dbutils.widgets.text("maxResults", "100")
+dbutils.widgets.text("measurementType", "miles")
 
-require(dbutils.widgets.get("authToken") != "<personal-access-token>", 
-"An access Token required to connect to Databricks Serverless SQL. Please follow follow instructions at https://docs.databricks.com/dev-tools/auth.html#pat for generating one")
+// COMMAND ----------
 
-require(dbutils.widgets.get("ServerlessUrl") != "jdbc:spark//", "Databricks Serverless compute is required. Please createt this compute resource if it doesn't exist and populate the JDBC connection information via 'Serverless Cluster Configuration' -> 'Advanced Options' -> 'JDBC/ODBC' -> 'JDBC Url'")
+// DBTITLE 1,Performance Related Params 
+dbutils.widgets.text("numPartitions", "8")
 
 // COMMAND ----------
 
 // DBTITLE 1,Test Spark Serverless Connectivity
 import com.databricks.industry.solutions.geospatial.searches._
-val con = SparkServerlessDS.connect(jdbcUrl)
-require(con.isClosed() == false, "Failed to connect to endpoint jdbcUrl: " + jdbcUrl)
-con.close()
-
-// COMMAND ----------
-
-//Search input Params
-val radius=25
-val maxResults = 100
-val measurementType="miles"
+val jdbcUrl = dbutils.widgets.get("ServerlessUrl") +  "UID=token;PWD="   + dbutils.widgets.get("AuthToken") + ";"
+try{ 
+  Class.forName("com.databricks.client.jdbc.Driver")
+  val con = SparkServerlessDS.connect(jdbcUrl)
+  require(con.isClosed() == false, "Failed to connect to endpoint jdbcUrl: " + jdbcUrl)
+  con.close()
+}catch {
+  case e : Exception => 
+   dbutils.notebook.exit("Stopping because serverless connectivity is not available due to error " + e.getMessage)
+}
 
 // COMMAND ----------
 
 // MAGIC %md
-// MAGIC # Create Input Datasets
+// MAGIC ## Create Input Datasets 
+// MAGIC
+// MAGIC Using Ribbon Health's provider directory sample dataset we will perform a search for members searching for care nearby.
 
 // COMMAND ----------
 
@@ -52,15 +59,22 @@ val measurementType="miles"
 
 // COMMAND ----------
 
-// DBTITLE 1,Load Sample Dataset
+// MAGIC %md ### Ribbon Health's Provider Directory
+
+// COMMAND ----------
+
+// DBTITLE 1,Load Sample Provider Dataset
 // MAGIC %python
-// MAGIC #dataset included in Github repo ./src/test/scala/resources/random_geo_sample.csv
+// MAGIC #dataset included in Github repo ./src/test/scala/resources/ribbon_health_directory_la_ma_20230911_sample.csv
 // MAGIC import os
+// MAGIC from pyspark.sql.functions import col
 // MAGIC df = ( spark.read.format("csv")
 // MAGIC         .option("header","true")
-// MAGIC         .load('file:///' + os.path.abspath('./src/test/scala/resources/random_geo_sample.csv'))
-// MAGIC )
-// MAGIC df.show() #10,000 Rows
+// MAGIC         .option("quote", "\"")
+// MAGIC         .option("escape", "\"")
+// MAGIC         .load('file:///' + os.path.abspath('./src/test/scala/resources/ribbon_health_directory_la_ma_20230911_sample.csv'))
+// MAGIC ).withColumn("id",col("node_uuid"))
+// MAGIC df.show() #500 rows
 
 // COMMAND ----------
 
@@ -71,10 +85,12 @@ val measurementType="miles"
 
 // COMMAND ----------
 
+// MAGIC %md ### Synthetic Member Data
+
+// COMMAND ----------
+
 // MAGIC %md
-// MAGIC Generate a second dataset randomly to perform search with the first dataset. 
-// MAGIC
-// MAGIC For example, we will consider the first dataset providers locations and the second dataset as member locations of whom we want to find the nearest providers for
+// MAGIC Generate a member dataset randomly generate to perform searches on 
 
 // COMMAND ----------
 
@@ -87,13 +103,14 @@ implicit val spark2 = spark
 
 /*
  * given an RDD of id/lat/long values, generate random lat/long values
- *   @param random sample of 10K values from above csv file
+ *   @param random sample of 500 values from above csv file
  *   @param distanceInMiles = max distance of randomly generated values
  *   @param number of random values to generate from each point in the dataset
  * 
- *    e.g. 10K (size of RDD) * 25 (default number of iterations) = Dataset of 200,000 rows to search through 
+ *    e.g. 500 (size of provider dataset) * 10 (default number of iterations) = Dataset of 5,000 rows to search through 
+ *       - Default is a smaller cluster and dataset
  */
-def generateRandomValues(df: Dataset[Row], distanceInMiles: Integer = 50, numIterations: Integer = 25): Dataset[Row] = {
+def generateRandomValues(df: Dataset[Row], distanceInMiles: Integer = 50, numIterations: Integer = 10): Dataset[Row] = {
   val r = scala.util.Random
   def newInt() = r.nextInt(2*distanceInMiles) - distanceInMiles
   def newPoint(point: WGS84Point) = GeoSearch.addDistanceToLatitude(newInt(), GeoSearch.addDistanceToLongitude(newInt(), point))
@@ -119,7 +136,7 @@ df.show()
 
 // COMMAND ----------
 
-// MAGIC %md # Run Search Algorithm 
+// MAGIC %md ## Run Search Algorithm 
 
 // COMMAND ----------
 
@@ -131,34 +148,59 @@ val ds = SparkServerlessDS.fromDF(spark.table("provider_facilities"), jdbcUrl, t
 
 // COMMAND ----------
 
-// MAGIC %md ## Setting search parallelism 
-// MAGIC
-// MAGIC This is based upon CPUs available to your cluster (faster runtimes with higher parallelism)
-
-// COMMAND ----------
-
 /*
-* Set numParallel value to the number of CPUs in your attached spark cluster
+* Set numPartitions value to the number of CPUs in your attached spark cluster
+*  - increasing numPartitions and cluster CPUs available will lead to faster results (higher level of parallel search)
+*  - default using 8 CPUs runs ~5 minutes
 */
-val numParallel = 96 //recommended for the sample dataset
 
-val searchRDD = ds.toInqueryRDD(spark.sql(""" select * from geospatial_searches.member_locations"""), radius, maxResults, measurementType).repartition(numParllel)
+val searchRDD = ds.toInqueryRDD(spark.sql(""" select * from geospatial_searches.member_locations"""), dbutils.widgets.get("radius").toInt, dbutils.widgets.get("maxResults").toInt, dbutils.widgets.get("measurementType")).repartition(dbutils.widgets.get("numPartitions").toInt)
 val resultRDD = ds.search(searchRDD)
 ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatial_searches.search_results_serverless")
 
 // COMMAND ----------
 
-// MAGIC %md ## Viewing the Results
+// MAGIC %md ### Viewing Sample Results
 
 // COMMAND ----------
 
 // MAGIC %sql
 // MAGIC
-// MAGIC SELECT * FROM  geospatial_searches.search_results_serverless limit 10;
+// MAGIC SELECT * FROM  geospatial_searches.search_results_serverless 
+// MAGIC limit 15;
 
 // COMMAND ----------
 
-// MAGIC %md # Performance Tuning
+// MAGIC %md ### Finding Nearest Providers by Specialty  
+// MAGIC
+// MAGIC The following query shows a sample selection of a members hospital choices with the distance from the hospital. 
+// MAGIC
+// MAGIC Commonly this type of view would be combined with a "ranking" of hospital quality and used for a member to determine the best choice for care. 
+
+// COMMAND ----------
+
+// MAGIC %sql 
+// MAGIC SELECT member_id
+// MAGIC ,neighbor.value.id as provider_id
+// MAGIC ,neighbor.euclideanDistance as distance_in_miles
+// MAGIC ,name as provider_name
+// MAGIC ,address as provider_address
+// MAGIC ,npis as provider_npi_list
+// MAGIC ,location_types as provider_specialties
+// MAGIC --ranking care quality column can provide "best" choices for care
+// MAGIC FROM (
+// MAGIC   SELECT origin.id as member_id
+// MAGIC   ,explode(neighbors) as neighbor 
+// MAGIC   FROM  geospatial_searches.search_results_serverless 
+// MAGIC )  search_results
+// MAGIC inner join provider_facilities
+// MAGIC   on neighbor.value.id = node_uuid
+// MAGIC    and location_types like "%Hospital%"
+// MAGIC limit 25
+
+// COMMAND ----------
+
+// MAGIC %md ### Performance Metrics & Tuning
 
 // COMMAND ----------
 
@@ -171,7 +213,7 @@ ds.fromSearchResultRDD(resultRDD).write.mode("overwrite").saveAsTable("geospatia
 // COMMAND ----------
 
 // DBTITLE 1,Median Search Time 
-spark.table("geospatial_searches.va_facility_results_sparkserverless").select("searchTimerSeconds")
+spark.table("geospatial_searches.search_results_serverless").select("searchTimerSeconds")
         .stat
         .approxQuantile("searchTimerSeconds", Array(0.50), 0.001) //median
         .head
@@ -179,19 +221,7 @@ spark.table("geospatial_searches.va_facility_results_sparkserverless").select("s
 // COMMAND ----------
 
 // DBTITLE 1,75th Percentile
-spark.table("geospatial_searches.va_facility_results_sparkserverless").select("searchTimerSeconds")
+spark.table("geospatial_searches.search_results_serverless").select("searchTimerSeconds")
         .stat
         .approxQuantile("searchTimerSeconds", Array(0.75), 0.001) //median
         .head
-
-// COMMAND ----------
-
-// MAGIC %sql 
-// MAGIC --Demonstrating opportunity for performance enhancement https://github.com/databricks-industry-solutions/geospatial-neighborhood-searches/issues/10
-// MAGIC
-// MAGIC select searchSpace, count(1)  as cnt
-// MAGIC from  geospatial_searches.search_results_serverless
-// MAGIC group by searchSpace
-// MAGIC having count(1) > 1 
-// MAGIC order by cnt desc
-// MAGIC limit 100
